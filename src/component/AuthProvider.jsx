@@ -9,20 +9,41 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('isAuthenticated') === 'true';
   });
+  const [role, setRole] = useState(() => {
+    return localStorage.getItem('role') || null;
+  });
 
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated);
-  }, [isAuthenticated]);
+    if (isAuthenticated && role) {
+      localStorage.setItem('role', role);
+    } else {
+      localStorage.removeItem('role');
+    }
+  }, [isAuthenticated, role]);
 
-  const login = () => setIsAuthenticated(true);
+  const login = (userRole) => {
+    // Prevent login as other role if already logged in
+    const currentRole = localStorage.getItem('role');
+    if (isAuthenticated && currentRole && currentRole !== userRole) {
+      message.error(`Please logout from the current account (${currentRole}) before logging in as ${userRole}.`);
+      return false;
+    }
+    setIsAuthenticated(true);
+    setRole(userRole);
+    return true;
+  };
+
   const logout = () => {
     setIsAuthenticated(false);
+    setRole(null);
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('role');
     message.success('Logout successful!');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

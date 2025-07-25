@@ -51,11 +51,16 @@ const Login = () => {
         emailOrPhone,
         otp: values.otp,
       });
+      // Try to login as student
+      const loginSuccess = login('student');
+      if (!loginSuccess) {
+        setLoading(false);
+        return;
+      }
       message.success('Login successful!');
       setShowOTP(false);
       form.resetFields();
       otpForm.resetFields();
-      login();
       navigate('/student-dashboard');
     } catch (err) {
       message.error(err.response?.data?.message || 'OTP verification failed');

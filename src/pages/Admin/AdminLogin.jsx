@@ -50,11 +50,16 @@ const AdminLogin = () => {
         emailOrPhone,
         otp: values.otp,
       });
+      // Try to login as admin
+      const loginSuccess = login('admin');
+      if (!loginSuccess) {
+        setLoading(false);
+        return;
+      }
       message.success('Login successful!');
       setShowOTP(false);
       form.resetFields();
       otpForm.resetFields();
-      login();
       navigate('/admin-dashboard');
     } catch (err) {
       message.error(err.response?.data?.message || 'OTP verification failed');
