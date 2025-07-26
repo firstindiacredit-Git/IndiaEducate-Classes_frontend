@@ -61,7 +61,17 @@ const Login = () => {
       setShowOTP(false);
       form.resetFields();
       otpForm.resetFields();
-      navigate('/student-dashboard');
+      // Store emailOrPhone for profile fetch
+      localStorage.setItem('studentEmailOrPhone', emailOrPhone);
+      // Fetch profile and check if it exists
+      const profileRes = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/student/profile`, { emailOrPhone });
+      const profile = profileRes.data;
+      // Only redirect to create-profile if profile is completely empty
+      if (!profile.fullName) {
+        navigate('/create-profile');
+      } else {
+        navigate('/student-dashboard');
+      }
     } catch (err) {
       message.error(err.response?.data?.message || 'OTP verification failed');
     } finally {

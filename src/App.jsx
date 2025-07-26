@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import Signup from './pages/Student/Signup'
 import Login from './pages/Student/Login'
 import StudentDashboard from './pages/Student/StudentDashboard'
+import CreateProfile from './pages/Student/CreateProfile'
 
 // admin routes
 import AdminSignup from './pages/Admin/AdminSignup'
@@ -69,6 +70,7 @@ const App = () => {
           {/* Student Routes */}
           <Route path='/signup' element={<StudentPublicRoute><Signup /></StudentPublicRoute>}></Route>
           <Route path='/' element={<StudentPublicRoute><Login /></StudentPublicRoute>}></Route>
+          <Route path='/create-profile' element={<CreateProfile />}></Route>
           <Route path='/student-dashboard' element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>}></Route>
 
           

@@ -12,6 +12,8 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(() => {
     return localStorage.getItem('role') || null;
   });
+  // Add profile state
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated);
@@ -37,13 +39,14 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setIsAuthenticated(false);
     setRole(null);
+    setProfile(null);
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('role');
     message.success('Logout successful!');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, logout, profile, setProfile }}>
       {children}
     </AuthContext.Provider>
   );
