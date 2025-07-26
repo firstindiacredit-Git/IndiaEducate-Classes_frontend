@@ -64,28 +64,75 @@ const CreateProfile = () => {
     });
   };
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('You can only upload image files!');
+      return false;
+    }
+
+    const isLessThan5MB = file.size <= MAX_FILE_SIZE;
+    if (!isLessThan5MB) {
+      message.error('Image must be smaller than 5MB! Please choose a smaller file.');
+      return false;
+    }
+
+    return true;
+  };
+
   const onFinish = async (values) => {
-    setLoading(true);
     try {
-      let profilePicture = initialValues.profilePicture || '';
-      if (fileList.length > 0) {
-        profilePicture = await handleUpload(fileList[0].originFileObj);
-      }
+      setLoading(true);
       const emailOrPhone = localStorage.getItem('studentEmailOrPhone');
-      const payload = {
-        emailOrPhone,
-        fullName: values.fullName,
-        country: values.country,
-        enrollmentId: values.enrollmentId,
-        program: values.program,
-        profilePicture,
-      };
-      await axios.put(`${import.meta.env.VITE_BASE_URL}/api/student/profile`, payload);
-      setProfile({ ...initialValues, ...payload });
-      message.success('Profile updated!');
-      navigate('/student-dashboard');
+      if (!emailOrPhone) {
+        throw new Error('Email or phone not found');
+      }
+
+      const formData = new FormData();
+      
+      // Add file if exists
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        formData.append('profilePicture', fileList[0].originFileObj);
+      }
+      
+      // Add other form data
+      formData.append('emailOrPhone', emailOrPhone);
+      formData.append('fullName', values.fullName);
+      formData.append('country', values.country);
+      // Only append enrollmentId if it has a value
+      if (values.enrollmentId && values.enrollmentId.trim() !== '') {
+        formData.append('enrollmentId', values.enrollmentId);
+      }
+      formData.append('program', values.program);
+
+      const res = await axios.put(
+        `${import.meta.env.VITE_BASE_URL}/api/student/profile`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 30000, // 30 second timeout
+        }
+      );
+
+      if (res.data && res.data.profile) {
+        setProfile(res.data.profile);
+        message.success('Profile created successfully!');
+        navigate('/student-dashboard');
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
-      message.error('Failed to update profile');
+      console.error('Profile update error:', err);
+      setFileList([]); // Clear file list on error
+      if (err.code === 'ECONNABORTED') {
+        message.error('Upload timeout. Please try again with a smaller file.');
+      } else {
+        message.error(err.response?.data?.message || 'Failed to create profile. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -103,14 +150,24 @@ const CreateProfile = () => {
         <Form.Item 
           label="Profile Picture" 
           name="profilePicture"
-          rules={[
-            { required: false, message: 'Profile picture is optional' }
-          ]}
+          extra="Max file size: 5MB. Supported formats: JPG, PNG, GIF"
         >
           <Upload
-            beforeUpload={() => false}
+            beforeUpload={beforeUpload}
             fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
+            onChange={({ fileList, file }) => {
+              // Only update fileList if file passes validation
+              if (file.status !== 'error') {
+                setFileList(fileList.map(f => ({
+                  ...f,
+                  status: 'done' // Force status to done since we're handling upload manually
+                })));
+              }
+            }}
+            customRequest={({ file, onSuccess }) => {
+              // We'll handle the actual upload in onFinish
+              onSuccess();
+            }}
             maxCount={1}
             accept="image/*"
             listType="picture"
@@ -165,12 +222,26 @@ const CreateProfile = () => {
             showSearch
             placeholder="Search and select your country"
             optionFilterProp="children"
-            filterOption={(input, option) =>
-              option.children.props.children.toLowerCase().includes(input.toLowerCase())
-            }
+            filterOption={(input, option) => {
+              const countryName = option?.label?.props?.children[1];
+              return countryName?.toLowerCase().includes(input.toLowerCase());
+            }}
           >
             {countries.map((country) => (
-              <Option key={country.name.common} value={country.name.common}>
+              <Option 
+                key={country.name.common} 
+                value={country.name.common}
+                label={
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img 
+                      src={country.flags.png} 
+                      alt={country.flags.alt || country.name.common}
+                      style={{ width: '20px', marginRight: '8px', objectFit: 'contain' }}
+                    />
+                    {country.name.common}
+                  </div>
+                }
+              >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <img 
                     src={country.flags.png} 
