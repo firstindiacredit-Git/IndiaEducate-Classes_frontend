@@ -4,6 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../component/AuthProvider';
+import { useCountries } from '../../component/CountriesApi';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -13,7 +14,7 @@ const CreateProfile = () => {
   const [loading, setLoading] = useState(false);
   const [initialValues, setInitialValues] = useState({});
   const [fileList, setFileList] = useState([]);
-  const [countries, setCountries] = useState([]);
+  const { countries, loading: countriesLoading, renderCountryLabel } = useCountries();
   const { profile, setProfile } = useAuth();
   const navigate = useNavigate();
 
@@ -35,22 +36,6 @@ const CreateProfile = () => {
     };
     fetchProfile();
   }, [form]);
-
-  useEffect(() => {
-    // Fetch countries data
-    const fetchCountries = async () => {
-      try {
-        const response = await axios.get('https://restcountries.com/v3.1/all?fields=name,flags');
-        const sortedCountries = response.data.sort((a, b) => 
-          a.name.common.localeCompare(b.name.common)
-        );
-        setCountries(sortedCountries);
-      } catch (error) {
-        message.error('Failed to fetch countries');
-      }
-    };
-    fetchCountries();
-  }, []);
 
   const handleUpload = async (file) => {
     // For demo, convert to base64. In production, upload to server or S3.
@@ -222,6 +207,7 @@ const CreateProfile = () => {
             showSearch
             placeholder="Search and select your country"
             optionFilterProp="children"
+            loading={countriesLoading}
             filterOption={(input, option) => {
               const countryName = option?.label?.props?.children[1];
               return countryName?.toLowerCase().includes(input.toLowerCase());
@@ -231,25 +217,9 @@ const CreateProfile = () => {
               <Option 
                 key={country.name.common} 
                 value={country.name.common}
-                label={
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img 
-                      src={country.flags.png} 
-                      alt={country.flags.alt || country.name.common}
-                      style={{ width: '20px', marginRight: '8px', objectFit: 'contain' }}
-                    />
-                    {country.name.common}
-                  </div>
-                }
+                label={renderCountryLabel(country)}
               >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img 
-                    src={country.flags.png} 
-                    alt={country.flags.alt || country.name.common}
-                    style={{ width: '20px', marginRight: '8px', objectFit: 'contain' }}
-                  />
-                  {country.name.common}
-                </div>
+                {renderCountryLabel(country)}
               </Option>
             ))}
           </Select>

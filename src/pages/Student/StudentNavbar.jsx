@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Button, Avatar, Dropdown, Menu, Row, Col, Modal, Form, Input, Select, Upload, message, Tag, Image } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import { useNavigate } from 'react-router-dom';
+import { useCountries } from '../../component/CountriesApi';
 import {
     UserOutlined,
     UploadOutlined,
@@ -22,23 +23,7 @@ const StudentNavbar = () => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState([]);
-    const [countries, setCountries] = useState([]);
-
-    // Fetch countries data
-    useEffect(() => {
-        const fetchCountries = async () => {
-            try {
-                const response = await axios.get('https://restcountries.com/v3.1/all?fields=name,flags');
-                const sortedCountries = response.data.sort((a, b) =>
-                    a.name.common.localeCompare(b.name.common)
-                );
-                setCountries(sortedCountries);
-            } catch (error) {
-                message.error('Failed to fetch countries');
-            }
-        };
-        fetchCountries();
-    }, []);
+    const { countries, loading: countriesLoading, renderCountryLabel } = useCountries();
 
     // Fetch profile if not loaded
     useEffect(() => {
@@ -367,6 +352,7 @@ const StudentNavbar = () => {
                             showSearch
                             placeholder="Search and select your country"
                             optionFilterProp="children"
+                            loading={countriesLoading}
                             filterOption={(input, option) => {
                                 const countryName = option?.label?.props?.children[1];
                                 return countryName?.toLowerCase().includes(input.toLowerCase());
@@ -376,25 +362,9 @@ const StudentNavbar = () => {
                                 <Option
                                     key={country.name.common}
                                     value={country.name.common}
-                                    label={
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <img
-                                                src={country.flags.png}
-                                                alt={country.flags.alt || country.name.common}
-                                                style={{ width: '20px', marginRight: '8px', objectFit: 'contain' }}
-                                            />
-                                            {country.name.common}
-                                        </div>
-                                    }
+                                    label={renderCountryLabel(country)}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <img
-                                            src={country.flags.png}
-                                            alt={country.flags.alt || country.name.common}
-                                            style={{ width: '20px', marginRight: '8px', objectFit: 'contain' }}
-                                        />
-                                        {country.name.common}
-                                    </div>
+                                    {renderCountryLabel(country)}
                                 </Option>
                             ))}
                         </Select>

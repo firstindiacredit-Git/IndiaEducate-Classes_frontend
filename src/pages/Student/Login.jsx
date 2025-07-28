@@ -52,7 +52,7 @@ const Login = () => {
         otp: values.otp,
       });
       // Try to login as student
-      const loginSuccess = login('student');
+      const loginSuccess = await login('student', emailOrPhone);
       if (!loginSuccess) {
         setLoading(false);
         return;
