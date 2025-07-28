@@ -25,7 +25,7 @@ const AdminLogin = () => {
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/admin-dashboard', { replace: true });
+      navigate('/admin-dashboard');
     }
   }, [isAuthenticated, navigate]);
 
@@ -46,21 +46,25 @@ const AdminLogin = () => {
   const handleVerifyOTP = async (values) => {
     setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/verify-otp`, {
+      // First verify OTP
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/verify-otp`, {
         emailOrPhone,
         otp: values.otp,
       });
-      // Try to login as admin
-      const loginSuccess = login('admin');
+
+      // Then try to login
+      const loginSuccess = await login('admin', emailOrPhone);
       if (!loginSuccess) {
+        message.error('Login failed. Please try again.');
         setLoading(false);
         return;
       }
+
       message.success('Login successful!');
       setShowOTP(false);
       form.resetFields();
       otpForm.resetFields();
-      navigate('/admin-dashboard');
+      navigate('/admin-dashboard', { replace: true });
     } catch (err) {
       message.error(err.response?.data?.message || 'OTP verification failed');
     } finally {
