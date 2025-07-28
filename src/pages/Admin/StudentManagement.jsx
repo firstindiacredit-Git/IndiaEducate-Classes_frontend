@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, Card, Row, Col, Table, Button, Modal, Form, Input, Select, Popconfirm, message, Tag, Space, Avatar, Image } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import { useCountries } from '../../component/CountriesApi';
+import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import axios from 'axios';
 import {
@@ -11,7 +12,8 @@ import {
   PhoneOutlined,
   MailOutlined,
   IdcardOutlined,
-  EditOutlined
+  EditOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -19,6 +21,7 @@ const { Option } = Select;
 
 const StudentManagement = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -198,13 +201,13 @@ const StudentManagement = () => {
       key: 'action',
       render: (_, record) => (
         <Space>
-          <Button 
+          {/* <Button 
             type="link" 
             icon={<EditOutlined />}
             onClick={() => showEditModal(record)}
           >
             Edit
-          </Button>
+          </Button> */}
           <Popconfirm
             title="Delete Student"
             description="Are you sure you want to delete this student?"
@@ -222,12 +225,24 @@ const StudentManagement = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <div style={{ minHeight: '100vh' }}>
       <AdminNavbar />
       
       <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Title level={2}>Student Management</Title>
+          <Space align="center">
+            <Button 
+              type="link" 
+              icon={<ArrowLeftOutlined />} 
+              onClick={() => navigate('/admin-dashboard')}
+              style={{ 
+                fontSize: '16px', 
+                marginRight: '8px',
+                padding: 0
+              }}
+            />
+            <Title level={2} style={{ margin: 0 }}>Student Management</Title>
+          </Space>
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
