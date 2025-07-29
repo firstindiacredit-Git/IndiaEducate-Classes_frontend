@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Card, Button, Row, Col, Progress, Space } from 'antd';
+import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
+import moment from 'moment';
 import { 
   FilePdfOutlined,
   VideoCameraOutlined,
@@ -8,15 +9,121 @@ import {
   TrophyOutlined,
   LineChartOutlined,
   QuestionCircleOutlined,
-  MailOutlined
+  MailOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 
 const StudentDashboard = () => {
   const { profile } = useAuth();
+  const [upcomingClasses, setUpcomingClasses] = useState([]);
+  const [activeClass, setActiveClass] = useState(null);
+  const [loading, setLoading] = useState(true);
   const firstName = profile?.fullName?.split(' ')[0] || 'Student';
+
+  // Fetch upcoming classes
+  const fetchClasses = async () => {
+    try {
+      setLoading(true);
+      const studentProgram = profile?.program || '24-session';
+      console.log('Student program:', studentProgram);
+      console.log('Fetching classes for program:', studentProgram);
+      
+      const [upcomingRes, activeRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/active/${studentProgram}`)
+      ]);
+      
+      console.log('Upcoming classes response:', upcomingRes.data);
+      console.log('Active class response:', activeRes.data);
+      
+      setUpcomingClasses(upcomingRes.data);
+      setActiveClass(activeRes.data);
+    } catch (err) {
+      console.error('Error fetching classes:', err);
+      message.error('Failed to fetch class schedule');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (profile?.program) {
+      fetchClasses();
+      // Poll for active classes every minute
+      const interval = setInterval(fetchClasses, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [profile?.program]);
+
+  // Function to format time until class starts
+  const getTimeUntilClass = (startTime) => {
+    const now = moment();
+    const start = moment(startTime);
+    const duration = moment.duration(start.diff(now));
+    
+    if (duration.asHours() >= 24) {
+      return `${Math.floor(duration.asDays())} days`;
+    } else if (duration.asHours() >= 1) {
+      return `${Math.floor(duration.asHours())} hours`;
+    } else {
+      return `${Math.floor(duration.asMinutes())} minutes`;
+    }
+  };
+
+  // Function to check if a class is about to start (within next 30 minutes)
+  const isClassStartingSoon = (startTime) => {
+    const now = moment();
+    const start = moment(startTime);
+    const minutesUntilStart = start.diff(now, 'minutes');
+    return minutesUntilStart <= 30 && minutesUntilStart > 0;
+  };
+
+  const classColumns = [
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Start Time',
+      dataIndex: 'startTime',
+      key: 'startTime',
+      render: (startTime) => moment(startTime).format('MMMM Do YYYY, h:mm a'),
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (duration) => `${duration} minutes`,
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => {
+        if (record.status === 'ongoing') {
+          return (
+            <Space direction="vertical" size="small">
+              <Tag color="green">IN PROGRESS</Tag>
+              {record.remainingTime > 0 && (
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {record.remainingTime} min remaining
+                </Text>
+              )}
+            </Space>
+          );
+        }
+        return (
+          <Tag color={record.status === 'scheduled' ? 'blue' : 'red'}>
+            {record.status.toUpperCase()}
+          </Tag>
+        );
+      },
+    }
+  ];
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -33,41 +140,70 @@ const StudentDashboard = () => {
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
           {/* Live Class Card */}
           <Col xs={24} md={12}>
-            <Card title="LIVE CLASS">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Text strong>Join join</Text>
-                <Text>Starts in 10:34</Text>
-                <Button type="primary" size="large">
-                  Join
-                </Button>
-              </Space>
+            <Card title="LIVE CLASS" loading={loading}>
+              {activeClass ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text strong>{activeClass.title}</Text>
+                  <Text type="success">Class is in progress!</Text>
+                  {activeClass.remainingTime > 0 ? (
+                    <>
+                      <Text type="warning">
+                        {activeClass.remainingTime} minutes remaining
+                      </Text>
+                      <Button 
+                        type="primary" 
+                        size="large"
+                        icon={<VideoCameraOutlined />}
+                        href={activeClass.meetingLink}
+                        target="_blank"
+                      >
+                        Join Now
+                      </Button>
+                    </>
+                  ) : (
+                    <Text type="secondary">Class has ended</Text>
+                  )}
+                </Space>
+              ) : upcomingClasses[0] ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Text strong>{upcomingClasses[0].title}</Text>
+                  <Text>
+                    Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
+                  </Text>
+                  <Button 
+                    type="default" 
+                    size="large" 
+                    disabled={!isClassStartingSoon(upcomingClasses[0].startTime)}
+                  >
+                    {isClassStartingSoon(upcomingClasses[0].startTime) ? 'Waiting to Start' : 'Not Started Yet'}
+                  </Button>
+                </Space>
+              ) : (
+                <Empty description="No upcoming classes scheduled" />
+              )}
             </Card>
           </Col>
 
           {/* Class Schedule Card */}
           <Col xs={24} md={12}>
-            <Card title="CLASS SCHEDULE">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center' }}>
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                  <div key={i} style={{ fontWeight: 'bold' }}>{day}</div>
-                ))}
-                {Array(31).fill(null).map((_, i) => {
-                  const isHighlighted = i + 1 === 17 || i + 1 === 19;
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        padding: '4px',
-                        backgroundColor: isHighlighted ? '#1890ff' : 'transparent',
-                        color: isHighlighted ? 'white' : 'inherit',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                  );
-                })}
-              </div>
+            <Card 
+              title="CLASS SCHEDULE" 
+              extra={
+                <Button type="link" icon={<CalendarOutlined />}>
+                  View All
+                </Button>
+              }
+            >
+              <Table
+                columns={classColumns}
+                dataSource={upcomingClasses}
+                rowKey="_id"
+                pagination={{ pageSize: 5 }}
+                loading={loading}
+                locale={{
+                  emptyText: <Empty description="No upcoming classes scheduled" />
+                }}
+              />
             </Card>
           </Col>
 
