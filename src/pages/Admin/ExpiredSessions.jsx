@@ -70,6 +70,13 @@ const ExpiredSessions = () => {
   // Expired sessions columns
   const expiredSessionsColumns = [
     {
+      title: '#',
+      dataIndex: 'index',
+      key: 'index',
+      render: (text, record, index) => index + 1,
+      width: 70,
+    },
+    {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
