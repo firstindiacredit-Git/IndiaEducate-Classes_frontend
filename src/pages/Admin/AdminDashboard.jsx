@@ -652,8 +652,8 @@ const AdminDashboard = () => {
             <Card 
               hoverable
               loading={loading}
-              onClick={() => navigate('/completed-sessions') } 
-              style={{ cursor: 'pointer' }} 
+              onClick={() => setCompletedSessionsModalVisible(true)}
+              style={{ cursor: 'pointer' }}
             >
               <Statistic
                 title="Completed Sessions"
