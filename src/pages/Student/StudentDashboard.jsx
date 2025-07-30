@@ -165,7 +165,7 @@ const StudentDashboard = () => {
                   )}
                 </Space>
               ) : upcomingClasses[0] ? (
-                <Space direction="vertical" style={{ width: '100%' }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
                   <Text strong>{upcomingClasses[0].title}</Text>
                   <Text>
                     Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
@@ -176,8 +176,8 @@ const StudentDashboard = () => {
                     disabled={!isClassStartingSoon(upcomingClasses[0].startTime)}
                   >
                     {isClassStartingSoon(upcomingClasses[0].startTime) ? 'Waiting to Start' : 'Not Started Yet'}
-                  </Button>
-                </Space>
+                </Button>
+              </Space>
               ) : (
                 <Empty description="No upcoming classes scheduled" />
               )}

@@ -652,7 +652,7 @@ const AdminDashboard = () => {
             <Card 
               hoverable
               loading={loading}
-              onClick={() => setCompletedSessionsModalVisible(true)}
+              onClick={() => navigate('/completed-sessions')}
               style={{ cursor: 'pointer' }}
             >
               <Statistic
@@ -668,7 +668,7 @@ const AdminDashboard = () => {
             <Card 
               hoverable
               loading={loading}
-              onClick={() => setUpcomingSessionsModalVisible(true)}
+              onClick={() => navigate('/upcoming-sessions')}
               style={{ cursor: 'pointer' }}
             >
               <Statistic
@@ -685,7 +685,7 @@ const AdminDashboard = () => {
             <Card 
               hoverable
               loading={loading}
-              onClick={() => setExpiredSessionsModalVisible(true)}
+              onClick={() => navigate('/expired-sessions')}
               style={{ cursor: 'pointer' }}
             >
               <Statistic

@@ -11,6 +11,9 @@ import CreateProfile from './pages/Student/CreateProfile';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import StudentManagement from './pages/Admin/StudentManagement';
 import ProtectedRoute from './component/ProtectedRoute';
+import CompletedSessions from './pages/Admin/CompletedSessions';
+import UpcomingSessions from './pages/Admin/UpcomingSessions';
+import ExpiredSessions from './pages/Admin/ExpiredSessions';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -60,6 +63,9 @@ const AppRoutes = () => {
           <StudentManagement />
         </ProtectedRoute>
       } />
+      <Route path="/completed-sessions" element={<ProtectedRoute><CompletedSessions /></ProtectedRoute>} />
+      <Route path="/upcoming-sessions" element={<ProtectedRoute><UpcomingSessions /></ProtectedRoute>} />
+      <Route path="/expired-sessions" element={<ProtectedRoute><ExpiredSessions /></ProtectedRoute>} />
 
       {/* Catch all route */}
       <Route path="*" element={
