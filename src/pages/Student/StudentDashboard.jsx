@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty } from 'antd';
+import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import moment from 'moment';
 import { 
@@ -17,11 +17,399 @@ import axios from 'axios';
 
 const { Title, Text } = Typography;
 
+// Custom Calendar Component
+const CustomCalendar = ({ classes, onDateClick }) => {
+  const [currentMonth, setCurrentMonth] = useState(moment());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [dateModalVisible, setDateModalVisible] = useState(false);
+  const [selectedDateClasses, setSelectedDateClasses] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all'); // all, scheduled, completed
+  const [monthModalVisible, setMonthModalVisible] = useState(false);
+  const [yearModalVisible, setYearModalVisible] = useState(false);
+
+  // Get calendar days for current month
+  const getCalendarDays = () => {
+    const startOfMonth = currentMonth.clone().startOf('month');
+    const endOfMonth = currentMonth.clone().endOf('month');
+    const startDate = startOfMonth.clone().startOf('week');
+    const endDate = endOfMonth.clone().endOf('week');
+    
+    const days = [];
+    let day = startDate.clone();
+    
+    while (day.isBefore(endDate)) {
+      days.push(day.clone());
+      day.add(1, 'day');
+    }
+    
+    return days;
+  };
+
+  // Get classes for a specific date
+  const getClassesForDate = (date) => {
+    let filteredClasses = classes.filter(cls => {
+      const classDate = moment(cls.startTime);
+      return classDate.isSame(date, 'day');
+    });
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filteredClasses = filteredClasses.filter(cls => cls.status === statusFilter);
+    }
+
+    return filteredClasses;
+  };
+
+  // Get date status (scheduled, completed, current)
+  const getDateStatus = (date) => {
+    const dateClasses = getClassesForDate(date);
+    const isCurrentDate = date.isSame(moment(), 'day');
+    const isPastDate = date.isBefore(moment(), 'day');
+    
+    if (isCurrentDate) return 'current';
+    if (dateClasses.length === 0) {
+      if (isPastDate) return 'expired';
+      return 'empty';
+    }
+    
+    const hasScheduled = dateClasses.some(cls => cls.status === 'scheduled');
+    const hasCompleted = dateClasses.some(cls => cls.status === 'completed');
+    
+    if (hasCompleted) return 'completed';
+    if (hasScheduled) return 'scheduled';
+    return 'empty';
+  };
+
+  // Handle date click
+  const handleDateClick = (date) => {
+    const dateClasses = getClassesForDate(date);
+    if (dateClasses.length > 0) {
+      setSelectedDate(date);
+      setSelectedDateClasses(dateClasses);
+      setDateModalVisible(true);
+    }
+  };
+
+  // Get date background color
+  const getDateBackgroundColor = (date) => {
+    const status = getDateStatus(date);
+    switch (status) {
+      case 'current': return '#1890ff';
+      case 'scheduled': return '#faad14';
+      case 'completed': return '#52c41a';
+      case 'expired': return '#f5f5f5';
+      default: return 'transparent';
+    }
+  };
+
+  // Get date text color
+  const getDateTextColor = (date) => {
+    const status = getDateStatus(date);
+    switch (status) {
+      case 'empty': return '#000000';
+      case 'expired': return '#999999';
+      default: return '#ffffff';
+    }
+  };
+
+  // Get tooltip text
+  const getTooltipText = (date) => {
+    const status = getDateStatus(date);
+    const dateClasses = getClassesForDate(date);
+    
+    if (status === 'current') return 'Current Date';
+    if (status === 'expired') return 'Past Date';
+    if (dateClasses.length === 0) return 'No classes';
+    
+    const scheduledCount = dateClasses.filter(cls => cls.status === 'scheduled').length;
+    const completedCount = dateClasses.filter(cls => cls.status === 'completed').length;
+    
+    let tooltip = '';
+    if (scheduledCount > 0) tooltip += `${scheduledCount} Scheduled`;
+    if (completedCount > 0) {
+      if (tooltip) tooltip += ', ';
+      tooltip += `${completedCount} Completed`;
+    }
+    
+    return tooltip;
+  };
+
+  const calendarDays = getCalendarDays();
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <>
+      <div style={{ marginBottom: '16px' }}>
+        <Row justify="space-between" align="middle">
+          <Button 
+            icon={<CalendarOutlined />} 
+            onClick={() => setCurrentMonth(currentMonth.clone().subtract(1, 'month'))}
+          >
+            Previous
+          </Button>
+          <div style={{ textAlign: 'center' }}>
+            <Button 
+              type="link" 
+              style={{ fontSize: '22px', fontWeight: 'bold', padding: '0 0px', color: '#000000' }}
+              onClick={() => setMonthModalVisible(true)}
+            >
+              {currentMonth.format('MMMM')}
+            </Button>
+            <Button 
+              type="link" 
+              style={{ fontSize: '16px', fontWeight: 'bold', padding: '0 4px', color: '#000000' }}
+              onClick={() => setYearModalVisible(true)}
+            >
+              {currentMonth.format('YYYY')}
+            </Button>
+          </div>
+          <Button 
+            icon={<CalendarOutlined />} 
+            onClick={() => setCurrentMonth(currentMonth.clone().add(1, 'month'))}
+          >
+            Next
+          </Button>
+        </Row>
+
+        {/* Status Filter Buttons */}
+        <Row justify="center" style={{ marginTop: '12px' }}>
+          <Space>
+            <Button 
+              size="small"
+              onClick={() => setStatusFilter('all')}
+              type={statusFilter === 'all' ? 'primary' : 'default'}
+            >
+              All Classes
+            </Button>
+            <Button 
+              size="small"
+              onClick={() => setStatusFilter('scheduled')}
+              type={statusFilter === 'scheduled' ? 'primary' : 'default'}
+              style={{ backgroundColor: statusFilter === 'scheduled' ? '#faad14' : undefined, borderColor: '#faad14', color: statusFilter === 'scheduled' ? '#fff' : '#faad14' }}
+            >
+              Scheduled
+            </Button>
+            <Button 
+              size="small"
+              onClick={() => setStatusFilter('completed')}
+              type={statusFilter === 'completed' ? 'primary' : 'default'}
+              style={{ backgroundColor: statusFilter === 'completed' ? '#52c41a' : undefined, borderColor: '#52c41a', color: statusFilter === 'completed' ? '#fff' : '#52c41a' }}
+            >
+              Completed
+            </Button>
+          </Space>
+        </Row>
+      </div>
+
+              <div style={{ border: '1px solid #f0f0f0', borderRadius: '8px', overflow: 'hidden' }}>
+          {/* Week days header */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            backgroundColor: '#fafafa', 
+            borderBottom: '1px solid #f0f0f0'
+          }}>
+            {weekDays.map(day => (
+              <div key={day} style={{ 
+                padding: '8px 4px', 
+                textAlign: 'center', 
+                fontWeight: 'bold',
+                borderRight: '1px solid #f0f0f0',
+                fontSize: '12px'
+              }}>
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar days */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {calendarDays.map((day, index) => {
+              const isCurrentMonth = day.isSame(currentMonth, 'month');
+              const status = getDateStatus(day);
+              const hasClasses = getClassesForDate(day).length > 0;
+              
+              return (
+                <Tooltip key={index} title={getTooltipText(day)}>
+                  <div
+                    style={{
+                      padding: '6px 4px',
+                      textAlign: 'center',
+                      cursor: hasClasses ? 'pointer' : 'default',
+                      backgroundColor: getDateBackgroundColor(day),
+                      color: getDateTextColor(day),
+                      borderRight: '1px solid #f0f0f0',
+                      borderBottom: '1px solid #f0f0f0',
+                      opacity: isCurrentMonth ? 1 : 0.3,
+                      minHeight: '40px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => hasClasses && handleDateClick(day)}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                      {day.format('D')}
+                    </div>
+                    {hasClasses && (
+                      <div style={{ 
+                        fontSize: '8px', 
+                        marginTop: '1px',
+                        opacity: 0.8 
+                      }}>
+                        {getClassesForDate(day).length} class{getClassesForDate(day).length > 1 ? 'es' : ''}
+                      </div>
+                    )}
+                  </div>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </div>
+
+              {/* Date Classes Modal */}
+        <Modal
+          title={
+            <Space>
+              <CalendarOutlined />
+              <span>Classes on {selectedDate?.format('MMMM DD, YYYY')}</span>
+            </Space>
+          }
+          open={dateModalVisible}
+          onCancel={() => setDateModalVisible(false)}
+          footer={null}
+          width={600}
+        >
+          {selectedDateClasses.length > 0 ? (
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {selectedDateClasses.map((cls) => (
+                <div key={cls._id} style={{ 
+                  padding: '16px', 
+                  border: '1px solid #f0f0f0', 
+                  borderRadius: '8px',
+                  backgroundColor: '#fafafa',
+                  marginBottom: '12px'
+                }}>
+                  <Row justify="space-between" align="middle">
+                    <Col span={16}>
+                      <Text strong style={{ fontSize: '16px' }}>{cls.title}</Text>
+                      <br />
+                      <Text type="secondary">
+                        {moment(cls.startTime).format('h:mm A')} • {cls.duration} minutes
+                      </Text>
+                      <br />
+                      <Text type="secondary">
+                        {cls.description || 'No description available'}
+                      </Text>
+                    </Col>
+                    <Col span={8} style={{ textAlign: 'right' }}>
+                      {cls.status === 'scheduled' && (
+                        <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                          SCHEDULED
+                        </Tag>
+                      )}
+                      {cls.status === 'completed' && (
+                        <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                          COMPLETED
+                        </Tag>
+                      )}
+                      {cls.status === 'ongoing' && (
+                        <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                          ONGOING
+                        </Tag>
+                      )}
+                    </Col>
+                  </Row>
+                </div>
+              ))}
+            </Space>
+          ) : (
+            <Empty description="No classes on this date" />
+          )}
+        </Modal>
+
+        {/* Month Selection Modal */}
+        <Modal
+          title="Select Month"
+          open={monthModalVisible}
+          onCancel={() => setMonthModalVisible(false)}
+          footer={null}
+          width={400}
+        >
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '8px',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            {moment.months().map((month, index) => (
+              <Button
+                key={month}
+                type={currentMonth.month() === index ? 'primary' : 'default'}
+                style={{ height: '40px' }}
+                onClick={() => {
+                  setCurrentMonth(currentMonth.month(index));
+                  setMonthModalVisible(false);
+                }}
+              >
+                {month}
+              </Button>
+            ))}
+          </div>
+        </Modal>
+
+        {/* Year Selection Modal */}
+        <Modal
+          title="Select Year"
+          open={yearModalVisible}
+          onCancel={() => setYearModalVisible(false)}
+          footer={null}
+          width={400}
+        >
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '8px',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            {Array.from({ length: 10 }, (_, i) => {
+              const year = moment().year() - 2 + i;
+              return (
+                <Button
+                  key={year}
+                  type={currentMonth.year() === year ? 'primary' : 'default'}
+                  style={{ height: '40px' }}
+                  onClick={() => {
+                    setCurrentMonth(currentMonth.year(year));
+                    setYearModalVisible(false);
+                  }}
+                >
+                  {year}
+                </Button>
+              );
+            })}
+          </div>
+        </Modal>
+
+    </>
+  );
+};
+
 const StudentDashboard = () => {
   const { profile } = useAuth();
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [activeClass, setActiveClass] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isJoined, setIsJoined] = useState(false);
+  const [studentAttendance, setStudentAttendance] = useState(null);
+  const [completedSessions, setCompletedSessions] = useState([]);
+  const [completedSessionsModalVisible, setCompletedSessionsModalVisible] = useState(false);
+  const [attendanceModalVisible, setAttendanceModalVisible] = useState(false);
+  const [allClassesModalVisible, setAllClassesModalVisible] = useState(false);
+  const [allClasses, setAllClasses] = useState([]);
   const firstName = profile?.fullName?.split(' ')[0] || 'Student';
 
   // Fetch upcoming classes
@@ -50,9 +438,56 @@ const StudentDashboard = () => {
     }
   };
 
+  // Fetch student's attendance history
+  const fetchStudentAttendance = async () => {
+    try {
+      if (!profile?._id) return;
+      
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/attendance/student/${profile._id}`);
+      setStudentAttendance(response.data);
+    } catch (err) {
+      console.error('Error fetching student attendance:', err);
+    }
+  };
+
+  // Fetch completed sessions
+  const fetchCompletedSessions = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/completed-sessions`);
+      setCompletedSessions(response.data.sessions || []);
+    } catch (err) {
+      console.error('Error fetching completed sessions:', err);
+    }
+  };
+
+  // Fetch all classes for calendar
+  const fetchAllClasses = async () => {
+    try {
+      const studentProgram = profile?.program || '24-session';
+      const [upcomingRes, completedRes, expiredRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/completed-sessions`),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/expired-sessions`)
+      ]);
+      
+      const allClassesData = [
+        ...upcomingRes.data,
+        ...completedRes.data.sessions,
+        ...expiredRes.data.sessions
+      ];
+      
+      setAllClasses(allClassesData);
+    } catch (err) {
+      console.error('Error fetching all classes:', err);
+    }
+  };
+
   useEffect(() => {
     if (profile?.program) {
       fetchClasses();
+      fetchStudentAttendance();
+      fetchCompletedSessions();
+      fetchAllClasses();
       // Poll for active classes every minute
       const interval = setInterval(fetchClasses, 60000);
       return () => clearInterval(interval);
@@ -80,6 +515,47 @@ const StudentDashboard = () => {
     const start = moment(startTime);
     const minutesUntilStart = start.diff(now, 'minutes');
     return minutesUntilStart <= 30 && minutesUntilStart > 0;
+  };
+
+  // Handle join class
+  const handleJoinClass = async (classData) => {
+    try {
+      // Record join time
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
+        classId: classData._id,
+        studentId: profile._id
+      });
+      
+      setIsJoined(true);
+      message.success('Join time recorded successfully');
+      
+      // Open meeting in new tab
+      window.open(classData.meetingLink, '_blank');
+      
+      // Set up leave tracking when user closes tab
+      window.addEventListener('beforeunload', () => {
+        handleLeaveClass(classData);
+      });
+      
+    } catch (err) {
+      console.error('Error joining class:', err);
+      message.error('Failed to record join time');
+    }
+  };
+
+  // Handle leave class
+  const handleLeaveClass = async (classData) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/leave`, {
+        classId: classData._id,
+        studentId: profile._id
+      });
+      
+      setIsJoined(false);
+      message.info('Leave time recorded');
+    } catch (err) {
+      console.error('Error leaving class:', err);
+    }
   };
 
   const classColumns = [
@@ -133,8 +609,14 @@ const StudentDashboard = () => {
         <Text>Enrolled in: {profile?.program || '24-session'} Program</Text>
         
         <div style={{ marginTop: 20 }}>
-          <Progress percent={25} showInfo={false} />
-          <Text>6 of 24 sessions completed</Text>
+          <Progress 
+            percent={studentAttendance?.stats?.attendancePercentage || 0} 
+            showInfo={false} 
+            status={studentAttendance?.stats?.attendancePercentage >= 80 ? 'success' : 'active'}
+          />
+          <Text>
+            {studentAttendance?.stats?.present || 0} of {studentAttendance?.stats?.totalClasses || 0} sessions attended
+          </Text>
         </div>
 
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
@@ -154,10 +636,10 @@ const StudentDashboard = () => {
                         type="primary" 
                         size="large"
                         icon={<VideoCameraOutlined />}
-                        href={activeClass.meetingLink}
-                        target="_blank"
+                        onClick={() => handleJoinClass(activeClass)}
+                        disabled={isJoined}
                       >
-                        Join Now
+                        {isJoined ? 'Already Joined' : 'Join Now'}
                       </Button>
                     </>
                   ) : (
@@ -189,23 +671,116 @@ const StudentDashboard = () => {
             <Card 
               title="CLASS SCHEDULE" 
               extra={
-                <Button type="link" icon={<CalendarOutlined />}>
+                <Button 
+                  type="link" 
+                  icon={<CalendarOutlined />}
+                  onClick={() => setAllClassesModalVisible(true)}
+                >
                   View All
                 </Button>
               }
             >
-              <Table
-                columns={classColumns}
-                dataSource={upcomingClasses}
-                rowKey="_id"
-                pagination={{ pageSize: 5 }}
-                loading={loading}
-                locale={{
-                  emptyText: <Empty description="No upcoming classes scheduled" />
-                }}
-              />
+              <CustomCalendar classes={allClasses} />
             </Card>
           </Col>
+
+          {/* My Attendance Card */}
+          <Col xs={24} md={12}>
+            <Card 
+              title="MY ATTENDANCE"
+              extra={
+                <Button 
+                  type="link" 
+                  icon={<LineChartOutlined />}
+                  onClick={() => setAttendanceModalVisible(true)}
+                >
+                  View Details
+                </Button>
+              }
+            >
+              {studentAttendance ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Row gutter={16}>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center' }}>
+                        <Text strong style={{ fontSize: '24px', color: '#52c41a' }}>
+                          {studentAttendance.stats.present}
+                        </Text>
+                        <br />
+                        <Text type="secondary">Present</Text>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center' }}>
+                        <Text strong style={{ fontSize: '24px', color: '#faad14' }}>
+                          {studentAttendance.stats.partial}
+                        </Text>
+                        <br />
+                        <Text type="secondary">Partial</Text>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center' }}>
+                        <Text strong style={{ fontSize: '24px', color: '#ff4d4f' }}>
+                          {studentAttendance.stats.absent}
+                        </Text>
+                        <br />
+                        <Text type="secondary">Absent</Text>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Divider />
+                  <Text>
+                    Attendance Rate: <Text strong>{studentAttendance.stats.attendancePercentage}%</Text>
+                  </Text>
+                </Space>
+              ) : (
+                <Empty description="No attendance data available" />
+              )}
+            </Card>
+          </Col>
+
+          {/* Completed Sessions Card */}
+          {/* <Col xs={24} md={12}>
+            <Card 
+              title="COMPLETED SESSIONS" 
+              extra={
+                <Button 
+                  type="link" 
+                  icon={<CalendarOutlined />}
+                  onClick={() => setCompletedSessionsModalVisible(true)}
+                >
+                  View All
+                </Button>
+              }
+            >
+              {completedSessions.length > 0 ? (
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {completedSessions.slice(0, 3).map((session) => (
+                    <div key={session._id} style={{ 
+                      padding: '12px', 
+                      border: '1px solid #f0f0f0', 
+                      borderRadius: '6px',
+                      backgroundColor: '#fafafa'
+                    }}>
+                      <Text strong>{session.title}</Text>
+                      <br />
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {moment(session.startTime).format('MMM DD, YYYY')} • {session.duration} minutes
+                      </Text>
+                    </div>
+                  ))}
+                  {completedSessions.length > 3 && (
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      +{completedSessions.length - 3} more sessions
+                    </Text>
+                  )}
+                </Space>
+              ) : (
+                <Empty description="No completed sessions yet" />
+              )}
+            </Card>
+          </Col> */}
 
           {/* Study Materials Card */}
           <Col xs={24} md={12}>
@@ -266,6 +841,222 @@ const StudentDashboard = () => {
             </Card>
           </Col>
         </Row>
+
+        {/* Completed Sessions Modal */}
+        <Modal
+          title={
+            <Space>
+              <CalendarOutlined />
+              <span>All Completed Sessions</span>
+            </Space>
+          }
+          open={completedSessionsModalVisible}
+          onCancel={() => setCompletedSessionsModalVisible(false)}
+          footer={null}
+          width={800}
+        >
+          {completedSessions.length > 0 ? (
+            <div style={{ 
+              maxHeight: '400px', 
+              overflowY: 'auto',
+              paddingRight: '8px'
+            }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {completedSessions.map((session) => (
+                  <div key={session._id} style={{ 
+                    padding: '16px', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: '8px',
+                    backgroundColor: '#fafafa',
+                    marginBottom: '12px'
+                  }}>
+                    <Row justify="space-between" align="middle">
+                      <Col span={16}>
+                        <Text strong style={{ fontSize: '16px' }}>{session.title}</Text>
+                        <br />
+                        <Text type="secondary">
+                          {moment(session.startTime).format('MMMM DD, YYYY')} at {moment(session.startTime).format('h:mm A')}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          Duration: {session.duration} minutes
+                        </Text>
+                      </Col>
+                      <Col span={8} style={{ textAlign: 'right' }}>
+                        <Tag color="green">Completed</Tag>
+                      </Col>
+                    </Row>
+                  </div>
+                ))}
+              </Space>
+            </div>
+          ) : (
+            <Empty description="No completed sessions available" />
+          )}
+        </Modal>
+
+        {/* Attendance Details Modal */}
+        <Modal
+          title={
+            <Space>
+              <LineChartOutlined />
+              <span>My Attendance Details</span>
+            </Space>
+          }
+          open={attendanceModalVisible}
+          onCancel={() => setAttendanceModalVisible(false)}
+          footer={null}
+          width={900}
+        >
+          {studentAttendance?.history?.length > 0 ? (
+            <div style={{ 
+              maxHeight: '500px', 
+              overflowY: 'auto',
+              paddingRight: '8px'
+            }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {studentAttendance.history.map((record) => (
+                  <div key={record._id} style={{ 
+                    padding: '16px', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: '8px',
+                    backgroundColor: '#fafafa',
+                    marginBottom: '12px'
+                  }}>
+                    <Row justify="space-between" align="middle">
+                      <Col span={16}>
+                        <Text strong style={{ fontSize: '16px' }}>
+                          {record.classId?.title || 'Unknown Class'}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          {moment(record.classId?.startTime).format('MMMM DD, YYYY')} at {moment(record.classId?.startTime).format('h:mm A')}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          Duration: {record.duration || 0} minutes
+                        </Text>
+                        {record.joinTime && (
+                          <>
+                            <br />
+                            <Text type="secondary">
+                              Joined: {moment(record.joinTime).format('h:mm A')}
+                            </Text>
+                          </>
+                        )}
+                        {record.leaveTime && (
+                          <>
+                            <br />
+                            <Text type="secondary">
+                              Left: {moment(record.leaveTime).format('h:mm A')}
+                            </Text>
+                          </>
+                        )}
+                      </Col>
+                      <Col span={8} style={{ textAlign: 'right' }}>
+                        {record.status === 'present' && (
+                          <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            Present
+                          </Tag>
+                        )}
+                        {record.status === 'partial' && (
+                          <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            Partial
+                          </Tag>
+                        )}
+                        {record.status === 'absent' && (
+                          <Tag color="red" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            Absent
+                          </Tag>
+                        )}
+                      </Col>
+                    </Row>
+                  </div>
+                ))}
+              </Space>
+            </div>
+          ) : (
+            <Empty description="No attendance records available" />
+          )}
+        </Modal>
+
+        {/* All Classes Modal */}
+        <Modal
+          title={
+            <Space>
+              <CalendarOutlined />
+              <span>All Classes</span>
+            </Space>
+          }
+          open={allClassesModalVisible}
+          onCancel={() => setAllClassesModalVisible(false)}
+          footer={null}
+          width={900}
+        >
+          {allClasses.length > 0 ? (
+            <div style={{ 
+              maxHeight: '500px', 
+              overflowY: 'auto',
+              paddingRight: '8px'
+            }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {allClasses.map((cls, index) => (
+                  <div key={cls._id} style={{ 
+                    padding: '16px', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: '8px',
+                    backgroundColor: '#fafafa',
+                    marginBottom: '12px'
+                  }}>
+                    <Row justify="space-between" align="middle">
+                      <Col span={16}>
+                        <Text strong style={{ fontSize: '16px' }}>
+                          #{index + 1} - {cls.title}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          {moment(cls.startTime).format('MMMM DD, YYYY')} at {moment(cls.startTime).format('h:mm A')}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          Duration: {cls.duration} minutes
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          {cls.description || 'No description available'}
+                        </Text>
+                      </Col>
+                      <Col span={8} style={{ textAlign: 'right' }}>
+                        {cls.status === 'scheduled' && (
+                          <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            SCHEDULED
+                          </Tag>
+                        )}
+                        {cls.status === 'completed' && (
+                          <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            COMPLETED
+                          </Tag>
+                        )}
+                        {cls.status === 'ongoing' && (
+                          <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            ONGOING
+                          </Tag>
+                        )}
+                        {cls.status === 'expired' && (
+                          <Tag color="red" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                            EXPIRED
+                          </Tag>
+                        )}
+                      </Col>
+                    </Row>
+                  </div>
+                ))}
+              </Space>
+            </div>
+          ) : (
+            <Empty description="No classes available" />
+          )}
+        </Modal>
       </div>
     </div>
   );

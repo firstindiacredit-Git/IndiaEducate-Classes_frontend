@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import axios from 'axios';
 import moment from 'moment';
-import JitsiMeeting from '../../component/JitsiMeeting';
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -19,8 +19,7 @@ const UpcomingSessions = () => {
   const [editForm] = Form.useForm();
   const [selectedUpcomingSession, setSelectedUpcomingSession] = useState(null);
   const [upcomingSessionDetailModalVisible, setUpcomingSessionDetailModalVisible] = useState(false);
-  const [activeClass, setActiveClass] = useState(null);
-  const [jitsiModalVisible, setJitsiModalVisible] = useState(false);
+
 
   // Function to format duration
   const formatDuration = (minutes) => {
@@ -42,21 +41,46 @@ const UpcomingSessions = () => {
     return classData.status;
   };
 
+  // Function to check if class can be started (1 minute before start time)
+  const canStartClass = (classData) => {
+    const now = new Date();
+    const startTime = new Date(classData.startTime);
+    const oneMinuteBefore = new Date(startTime.getTime() - (1 * 60000)); // 1 minute before
+    
+    return now >= oneMinuteBefore;
+  };
+
+  // Function to get time until class can start
+  const getTimeUntilStart = (classData) => {
+    const now = new Date();
+    const startTime = new Date(classData.startTime);
+    const oneMinuteBefore = new Date(startTime.getTime() - (1 * 60000));
+    
+    if (now >= oneMinuteBefore) {
+      return null; // Can start now
+    }
+    
+    const timeDiff = oneMinuteBefore - now;
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
+
   // Fetch upcoming classes
   const fetchUpcomingClasses = async () => {
     try {
       console.log('Fetching upcoming classes...');
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/all`);
       
-      // Check if any active class has ended
-      if (activeClass) {
-        const status = checkClassStatus(activeClass);
-        if (status === 'completed') {
-          setJitsiModalVisible(false);
-          setActiveClass(null);
-          message.info('Class has ended due to duration completion');
-        }
-      }
+
 
       setUpcomingClasses(response.data);
     } catch (err) {
@@ -71,8 +95,54 @@ const UpcomingSessions = () => {
     fetchUpcomingClasses();
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchUpcomingClasses, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Real-time countdown for start buttons (every second)
+    const countdownInterval = setInterval(() => {
+      // Force re-render to update countdown timers
+      setUpcomingClasses(prev => [...prev]);
+    }, 1000);
+    
+      // Check for completed classes more frequently (every 10 seconds)
+  const completionCheckInterval = setInterval(() => {
+    const now = new Date();
+    const completedClasses = upcomingClasses.filter(classItem => {
+      if (classItem.status === 'ongoing') {
+        const startTime = new Date(classItem.startTime);
+        const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
+        return now > endTime;
+      }
+      return false;
+    });
+    
+    // Check for classes ending soon (1 minute warning)
+    const endingSoonClasses = upcomingClasses.filter(classItem => {
+      if (classItem.status === 'ongoing') {
+        const startTime = new Date(classItem.startTime);
+        const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
+        const oneMinuteBefore = new Date(endTime.getTime() - (1 * 60000));
+        return now >= oneMinuteBefore && now < endTime;
+      }
+      return false;
+    });
+    
+    if (completedClasses.length > 0) {
+      message.info('Some classes have been automatically ended due to time completion.');
+      fetchUpcomingClasses(); // Refresh the list
+    }
+    
+    if (endingSoonClasses.length > 0) {
+      endingSoonClasses.forEach(classItem => {
+        message.warning(`Class "${classItem.title}" will end in 1 minute!`);
+      });
+    }
+  }, 10000);
+    
+    return () => {
+      clearInterval(interval);
+      clearInterval(countdownInterval);
+      clearInterval(completionCheckInterval);
+    };
+  }, [upcomingClasses]);
 
   // Start class meeting
   const handleStartClass = async (classId) => {
@@ -80,8 +150,10 @@ const UpcomingSessions = () => {
       console.log('Starting class:', classId);
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/classes/start/${classId}`);
       const { meetingLink } = response.data.schedule;
-      setActiveClass(response.data.schedule);
-      setJitsiModalVisible(true);
+      
+      // Redirect directly to Jitsi meeting
+      window.open(meetingLink, '_blank');
+      
       fetchUpcomingClasses(); // Refresh the list
       message.success('Class started successfully');
     } catch (err) {
@@ -95,8 +167,6 @@ const UpcomingSessions = () => {
     try {
       await axios.post(`${import.meta.env.VITE_BASE_URL}/api/classes/end/${classId}`);
       message.success('Class ended successfully');
-      setJitsiModalVisible(false);
-      setActiveClass(null);
       fetchUpcomingClasses();
     } catch (err) {
       console.error('Error ending class:', err);
@@ -106,8 +176,8 @@ const UpcomingSessions = () => {
 
   // Join ongoing class
   const handleJoinClass = (classData) => {
-    setActiveClass(classData);
-    setJitsiModalVisible(true);
+    // Redirect directly to Jitsi meeting
+    window.open(classData.meetingLink, '_blank');
   };
 
   // Show edit modal
@@ -245,13 +315,23 @@ const UpcomingSessions = () => {
           </Button>
           {record.status === 'scheduled' && (
             <>
-              <Button 
-                type="primary" 
-                icon={<VideoCameraOutlined />}
-                onClick={() => handleStartClass(record._id)}
-              >
-                Start Class
-              </Button>
+              {canStartClass(record) ? (
+                <Button 
+                  type="primary" 
+                  icon={<VideoCameraOutlined />}
+                  onClick={() => handleStartClass(record._id)}
+                >
+                  Start Class
+                </Button>
+              ) : (
+                <Button 
+                  type="default" 
+                  disabled
+                  icon={<ClockCircleOutlined />}
+                >
+                  {getTimeUntilStart(record)}
+                </Button>
+              )}
               <Button
                 type="default"
                 icon={<EditOutlined />}
@@ -537,15 +617,7 @@ const UpcomingSessions = () => {
           )}
         </Modal>
 
-        {/* Jitsi Meeting Modal */}
-        <JitsiMeeting
-          isOpen={jitsiModalVisible}
-          onClose={() => setJitsiModalVisible(false)}
-          meetingLink={activeClass?.meetingLink}
-          classId={activeClass?._id}
-          isAdmin={true}
-          onEndClass={handleEndClass}
-        />
+
       </div>
     </div>
   );

@@ -134,8 +134,8 @@ const AdminDashboard = () => {
     fetchData();
 
     // Poll for updates every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchData, 30000);
+    // return () => clearInterval(interval);
   }, []);
 
 
