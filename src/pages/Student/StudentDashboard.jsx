@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import moment from 'moment';
-import { 
+import {
   FilePdfOutlined,
   VideoCameraOutlined,
   AudioOutlined,
@@ -34,15 +34,15 @@ const CustomCalendar = ({ classes, onDateClick }) => {
     const endOfMonth = currentMonth.clone().endOf('month');
     const startDate = startOfMonth.clone().startOf('week');
     const endDate = endOfMonth.clone().endOf('week');
-    
+
     const days = [];
     let day = startDate.clone();
-    
+
     while (day.isBefore(endDate)) {
       days.push(day.clone());
       day.add(1, 'day');
     }
-    
+
     return days;
   };
 
@@ -65,13 +65,13 @@ const CustomCalendar = ({ classes, onDateClick }) => {
   const getDateStatus = (date) => {
     const dateClasses = getClassesForDate(date);
     const isCurrentDate = date.isSame(moment(), 'day');
-    
+
     if (isCurrentDate) return 'current';
     if (dateClasses.length === 0) return 'empty';
-    
+
     const hasScheduled = dateClasses.some(cls => cls.status === 'scheduled');
     const hasCompleted = dateClasses.some(cls => cls.status === 'completed');
-    
+
     if (hasCompleted) return 'completed';
     if (hasScheduled) return 'scheduled';
     return 'empty';
@@ -111,20 +111,20 @@ const CustomCalendar = ({ classes, onDateClick }) => {
   const getTooltipText = (date) => {
     const status = getDateStatus(date);
     const dateClasses = getClassesForDate(date);
-    
+
     if (status === 'current') return 'Current Date';
     if (dateClasses.length === 0) return 'No classes';
-    
+
     const scheduledCount = dateClasses.filter(cls => cls.status === 'scheduled').length;
     const completedCount = dateClasses.filter(cls => cls.status === 'completed').length;
-    
+
     let tooltip = '';
     if (scheduledCount > 0) tooltip += `${scheduledCount} Scheduled`;
     if (completedCount > 0) {
       if (tooltip) tooltip += ', ';
       tooltip += `${completedCount} Completed`;
     }
-    
+
     return tooltip;
   };
 
@@ -135,30 +135,30 @@ const CustomCalendar = ({ classes, onDateClick }) => {
     <>
       <div style={{ marginBottom: '16px' }}>
         <Row justify="space-between" align="middle">
-          <Button 
-            icon={<CalendarOutlined />} 
+          <Button
+            icon={<CalendarOutlined />}
             onClick={() => setCurrentMonth(currentMonth.clone().subtract(1, 'month'))}
           >
             Previous
           </Button>
           <div style={{ textAlign: 'center' }}>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               style={{ fontSize: '22px', fontWeight: 'bold', padding: '0 0px', color: '#000000' }}
               onClick={() => setMonthModalVisible(true)}
             >
               {currentMonth.format('MMMM')}
             </Button>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               style={{ fontSize: '16px', fontWeight: 'bold', padding: '0 4px', color: '#000000' }}
               onClick={() => setYearModalVisible(true)}
             >
               {currentMonth.format('YYYY')}
             </Button>
           </div>
-          <Button 
-            icon={<CalendarOutlined />} 
+          <Button
+            icon={<CalendarOutlined />}
             onClick={() => setCurrentMonth(currentMonth.clone().add(1, 'month'))}
           >
             Next
@@ -168,14 +168,14 @@ const CustomCalendar = ({ classes, onDateClick }) => {
         {/* Status Filter Buttons */}
         <Row justify="center" style={{ marginTop: '12px' }}>
           <Space>
-            <Button 
+            <Button
               size="small"
               onClick={() => setStatusFilter('all')}
               type={statusFilter === 'all' ? 'primary' : 'default'}
             >
               All Classes
             </Button>
-            <Button 
+            <Button
               size="small"
               onClick={() => setStatusFilter('scheduled')}
               type={statusFilter === 'scheduled' ? 'primary' : 'default'}
@@ -183,7 +183,7 @@ const CustomCalendar = ({ classes, onDateClick }) => {
             >
               Scheduled
             </Button>
-            <Button 
+            <Button
               size="small"
               onClick={() => setStatusFilter('completed')}
               type={statusFilter === 'completed' ? 'primary' : 'default'}
@@ -195,198 +195,198 @@ const CustomCalendar = ({ classes, onDateClick }) => {
         </Row>
       </div>
 
-              <div style={{ border: '1px solid #f0f0f0', borderRadius: '8px', overflow: 'hidden' }}>
-          {/* Week days header */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            backgroundColor: '#fafafa', 
-            borderBottom: '1px solid #f0f0f0'
-          }}>
-            {weekDays.map(day => (
-              <div key={day} style={{ 
-                padding: '8px 4px', 
-                textAlign: 'center', 
-                fontWeight: 'bold',
-                borderRight: '1px solid #f0f0f0',
-                fontSize: '12px'
-              }}>
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar days */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-            {calendarDays.map((day, index) => {
-              const isCurrentMonth = day.isSame(currentMonth, 'month');
-              const status = getDateStatus(day);
-              const hasClasses = getClassesForDate(day).length > 0;
-              
-              return (
-                <Tooltip key={index} title={getTooltipText(day)}>
-                  <div
-                    style={{
-                      padding: '6px 4px',
-                      textAlign: 'center',
-                      cursor: hasClasses ? 'pointer' : 'default',
-                      backgroundColor: getDateBackgroundColor(day),
-                      color: getDateTextColor(day),
-                      borderRight: '1px solid #f0f0f0',
-                      borderBottom: '1px solid #f0f0f0',
-                      opacity: isCurrentMonth ? 1 : 0.3,
-                      minHeight: '40px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}
-                    onClick={() => hasClasses && handleDateClick(day)}
-                  >
-                    <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
-                      {day.format('D')}
-                    </div>
-                    {hasClasses && (
-                      <div style={{ 
-                        fontSize: '8px', 
-                        marginTop: '1px',
-                        opacity: 0.8 
-                      }}>
-                        {getClassesForDate(day).length} class{getClassesForDate(day).length > 1 ? 'es' : ''}
-                      </div>
-                    )}
-                  </div>
-                </Tooltip>
-              );
-            })}
-          </div>
+      <div style={{ border: '1px solid #f0f0f0', borderRadius: '8px', overflow: 'hidden' }}>
+        {/* Week days header */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          backgroundColor: '#fafafa',
+          borderBottom: '1px solid #f0f0f0'
+        }}>
+          {weekDays.map(day => (
+            <div key={day} style={{
+              padding: '8px 4px',
+              textAlign: 'center',
+              fontWeight: 'bold',
+              borderRight: '1px solid #f0f0f0',
+              fontSize: '12px'
+            }}>
+              {day}
+            </div>
+          ))}
         </div>
 
-              {/* Date Classes Modal */}
-        <Modal
-          title={
-            <Space>
-              <CalendarOutlined />
-              <span>Classes on {selectedDate?.format('MMMM DD, YYYY')}</span>
-            </Space>
-          }
-          open={dateModalVisible}
-          onCancel={() => setDateModalVisible(false)}
-          footer={null}
-          width={600}
-        >
-          {selectedDateClasses.length > 0 ? (
-            <Space direction="vertical" style={{ width: '100%' }}>
-              {selectedDateClasses.map((cls) => (
-                <div key={cls._id} style={{ 
-                  padding: '16px', 
-                  border: '1px solid #f0f0f0', 
-                  borderRadius: '8px',
-                  backgroundColor: '#fafafa',
-                  marginBottom: '12px'
-                }}>
-                  <Row justify="space-between" align="middle">
-                    <Col span={16}>
-                      <Text strong style={{ fontSize: '16px' }}>{cls.title}</Text>
-                      <br />
-                      <Text type="secondary">
-                        {moment(cls.startTime).format('h:mm A')} • {cls.duration} minutes
-                      </Text>
-                      <br />
-                      <Text type="secondary">
-                        {cls.description || 'No description available'}
-                      </Text>
-                    </Col>
-                    <Col span={8} style={{ textAlign: 'right' }}>
-                      {cls.status === 'scheduled' && (
-                        <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                          SCHEDULED
-                        </Tag>
-                      )}
-                      {cls.status === 'completed' && (
-                        <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                          COMPLETED
-                        </Tag>
-                      )}
-                      {cls.status === 'ongoing' && (
-                        <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                          ONGOING
-                        </Tag>
-                      )}
-                    </Col>
-                  </Row>
-                </div>
-              ))}
-            </Space>
-          ) : (
-            <Empty description="No classes on this date" />
-          )}
-        </Modal>
+        {/* Calendar days */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          {calendarDays.map((day, index) => {
+            const isCurrentMonth = day.isSame(currentMonth, 'month');
+            const status = getDateStatus(day);
+            const hasClasses = getClassesForDate(day).length > 0;
 
-        {/* Month Selection Modal */}
-        <Modal
-          title="Select Month"
-          open={monthModalVisible}
-          onCancel={() => setMonthModalVisible(false)}
-          footer={null}
-          width={400}
-        >
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '8px',
-            maxHeight: '300px',
-            overflowY: 'auto'
-          }}>
-            {moment.months().map((month, index) => (
+            return (
+              <Tooltip key={index} title={getTooltipText(day)}>
+                <div
+                  style={{
+                    padding: '6px 4px',
+                    textAlign: 'center',
+                    cursor: hasClasses ? 'pointer' : 'default',
+                    backgroundColor: getDateBackgroundColor(day),
+                    color: getDateTextColor(day),
+                    borderRight: '1px solid #f0f0f0',
+                    borderBottom: '1px solid #f0f0f0',
+                    opacity: isCurrentMonth ? 1 : 0.3,
+                    minHeight: '40px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                  onClick={() => hasClasses && handleDateClick(day)}
+                >
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                    {day.format('D')}
+                  </div>
+                  {hasClasses && (
+                    <div style={{
+                      fontSize: '8px',
+                      marginTop: '1px',
+                      opacity: 0.8
+                    }}>
+                      {getClassesForDate(day).length} class{getClassesForDate(day).length > 1 ? 'es' : ''}
+                    </div>
+                  )}
+                </div>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Date Classes Modal */}
+      <Modal
+        title={
+          <Space>
+            <CalendarOutlined />
+            <span>Classes on {selectedDate?.format('MMMM DD, YYYY')}</span>
+          </Space>
+        }
+        open={dateModalVisible}
+        onCancel={() => setDateModalVisible(false)}
+        footer={null}
+        width={600}
+      >
+        {selectedDateClasses.length > 0 ? (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            {selectedDateClasses.map((cls) => (
+              <div key={cls._id} style={{
+                padding: '16px',
+                border: '1px solid #f0f0f0',
+                borderRadius: '8px',
+                backgroundColor: '#fafafa',
+                marginBottom: '12px'
+              }}>
+                <Row justify="space-between" align="middle">
+                  <Col span={16}>
+                    <Text strong style={{ fontSize: '16px' }}>{cls.title}</Text>
+                    <br />
+                    <Text type="secondary">
+                      {moment(cls.startTime).format('h:mm A')} • {cls.duration} minutes
+                    </Text>
+                    <br />
+                    <Text type="secondary">
+                      {cls.description || 'No description available'}
+                    </Text>
+                  </Col>
+                  <Col span={8} style={{ textAlign: 'right' }}>
+                    {cls.status === 'scheduled' && (
+                      <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                        SCHEDULED
+                      </Tag>
+                    )}
+                    {cls.status === 'completed' && (
+                      <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                        COMPLETED
+                      </Tag>
+                    )}
+                    {cls.status === 'ongoing' && (
+                      <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                        ONGOING
+                      </Tag>
+                    )}
+                  </Col>
+                </Row>
+              </div>
+            ))}
+          </Space>
+        ) : (
+          <Empty description="No classes on this date" />
+        )}
+      </Modal>
+
+      {/* Month Selection Modal */}
+      <Modal
+        title="Select Month"
+        open={monthModalVisible}
+        onCancel={() => setMonthModalVisible(false)}
+        footer={null}
+        width={400}
+      >
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '8px',
+          maxHeight: '300px',
+          overflowY: 'auto'
+        }}>
+          {moment.months().map((month, index) => (
+            <Button
+              key={month}
+              type={currentMonth.month() === index ? 'primary' : 'default'}
+              style={{ height: '40px' }}
+              onClick={() => {
+                setCurrentMonth(currentMonth.month(index));
+                setMonthModalVisible(false);
+              }}
+            >
+              {month}
+            </Button>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Year Selection Modal */}
+      <Modal
+        title="Select Year"
+        open={yearModalVisible}
+        onCancel={() => setYearModalVisible(false)}
+        footer={null}
+        width={400}
+      >
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '8px',
+          maxHeight: '300px',
+          overflowY: 'auto'
+        }}>
+          {Array.from({ length: 10 }, (_, i) => {
+            const year = moment().year() - 2 + i;
+            return (
               <Button
-                key={month}
-                type={currentMonth.month() === index ? 'primary' : 'default'}
+                key={year}
+                type={currentMonth.year() === year ? 'primary' : 'default'}
                 style={{ height: '40px' }}
                 onClick={() => {
-                  setCurrentMonth(currentMonth.month(index));
-                  setMonthModalVisible(false);
+                  setCurrentMonth(currentMonth.year(year));
+                  setYearModalVisible(false);
                 }}
               >
-                {month}
+                {year}
               </Button>
-            ))}
-          </div>
-        </Modal>
-
-        {/* Year Selection Modal */}
-        <Modal
-          title="Select Year"
-          open={yearModalVisible}
-          onCancel={() => setYearModalVisible(false)}
-          footer={null}
-          width={400}
-        >
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '8px',
-            maxHeight: '300px',
-            overflowY: 'auto'
-          }}>
-            {Array.from({ length: 10 }, (_, i) => {
-              const year = moment().year() - 2 + i;
-              return (
-                <Button
-                  key={year}
-                  type={currentMonth.year() === year ? 'primary' : 'default'}
-                  style={{ height: '40px' }}
-                  onClick={() => {
-                    setCurrentMonth(currentMonth.year(year));
-                    setYearModalVisible(false);
-                  }}
-                >
-                  {year}
-                </Button>
-              );
-            })}
-          </div>
-        </Modal>
+            );
+          })}
+        </div>
+      </Modal>
 
     </>
   );
@@ -415,15 +415,15 @@ const StudentDashboard = () => {
       const studentProgram = profile?.program || '24-session';
       console.log('Student program:', studentProgram);
       console.log('Fetching classes for program:', studentProgram);
-      
+
       const [upcomingRes, activeRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/active/${studentProgram}`)
       ]);
-      
+
       console.log('Upcoming classes response:', upcomingRes.data);
       console.log('Active class response:', activeRes.data);
-      
+
       setUpcomingClasses(upcomingRes.data);
       setActiveClass(activeRes.data);
     } catch (err) {
@@ -438,7 +438,7 @@ const StudentDashboard = () => {
   const fetchStudentAttendance = async () => {
     try {
       if (!profile?._id) return;
-      
+
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/attendance/student/${profile._id}`);
       setStudentAttendance(response.data);
     } catch (err) {
@@ -464,12 +464,12 @@ const StudentDashboard = () => {
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/completed-sessions`)
       ]);
-      
+
       const allClassesData = [
         ...upcomingRes.data,
         ...completedRes.data.sessions
       ];
-      
+
       setAllClasses(allClassesData);
     } catch (err) {
       console.error('Error fetching all classes:', err);
@@ -493,7 +493,7 @@ const StudentDashboard = () => {
     const countdownInterval = setInterval(() => {
       setCountdownKey(prev => prev + 1);
     }, 1000);
-    
+
     return () => clearInterval(countdownInterval);
   }, []);
 
@@ -502,16 +502,16 @@ const StudentDashboard = () => {
     const now = moment();
     const start = moment(startTime);
     const duration = moment.duration(start.diff(now));
-    
+
     if (duration.asSeconds() <= 0) {
       return 'Starting now';
     }
-    
+
     const days = Math.floor(duration.asDays());
     const hours = duration.hours();
     const minutes = duration.minutes();
     const seconds = duration.seconds();
-    
+
     if (days > 0) {
       return `${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
     } else if (hours > 0) {
@@ -539,18 +539,18 @@ const StudentDashboard = () => {
         classId: classData._id,
         studentId: profile._id
       });
-      
+
       setIsJoined(true);
       message.success('Join time recorded successfully');
-      
+
       // Open meeting in new tab
       window.open(classData.meetingLink, '_blank');
-      
+
       // Set up leave tracking when user closes tab
       window.addEventListener('beforeunload', () => {
         handleLeaveClass(classData);
       });
-      
+
     } catch (err) {
       console.error('Error joining class:', err);
       message.error('Failed to record join time');
@@ -564,7 +564,7 @@ const StudentDashboard = () => {
         classId: classData._id,
         studentId: profile._id
       });
-      
+
       setIsJoined(false);
       message.info('Leave time recorded');
     } catch (err) {
@@ -621,11 +621,11 @@ const StudentDashboard = () => {
       <div style={{ padding: '24px 40px' }}>
         <Title level={2}>Welcome, {firstName}</Title>
         <Text>Enrolled in: {profile?.program || '24-session'} Program</Text>
-        
+
         <div style={{ marginTop: 20 }}>
-          <Progress 
-            percent={studentAttendance?.stats?.attendancePercentage || 0} 
-            showInfo={false} 
+          <Progress
+            percent={studentAttendance?.stats?.attendancePercentage || 0}
+            showInfo={false}
             status={studentAttendance?.stats?.attendancePercentage >= 80 ? 'success' : 'active'}
           />
           <Text>
@@ -634,7 +634,7 @@ const StudentDashboard = () => {
         </div>
 
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
-          {/* Left Side - Live Class and My Attendance */}
+          {/* Left Side */}
           <Col xs={24} lg={12}>
             <Row gutter={[0, 24]}>
               {/* Live Class Card */}
@@ -659,14 +659,14 @@ const StudentDashboard = () => {
                         </Col>
                         <Col span={8} style={{ textAlign: 'right' }}>
                           <Space direction="vertical" size="small">
-                            <Button 
-                              type="link" 
+                            <Button
+                              type="link"
                               icon={<InfoCircleOutlined />}
                               onClick={() => setUpcomingClassesModalVisible(true)}
                             >
                               View Details
                             </Button>
-                            <Button 
+                            <Button
                               type="primary"
                               icon={<VideoCameraOutlined />}
                               onClick={() => handleJoinClass(activeClass)}
@@ -688,20 +688,20 @@ const StudentDashboard = () => {
                             {moment(upcomingClasses[0].startTime).format('MMM DD, YYYY • h:mm A')} • {upcomingClasses[0].duration} minutes
                           </Text>
                           <br />
-                                                  <Text key={countdownKey}>
-                          Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
-                        </Text>
+                          <Text key={countdownKey}>
+                            Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
+                          </Text>
                         </Col>
                         <Col span={8} style={{ textAlign: 'right' }}>
                           <Space direction="vertical" size="small">
-                            <Button 
-                              type="link" 
+                            <Button
+                              type="link"
                               icon={<InfoCircleOutlined />}
                               onClick={() => setUpcomingClassesModalVisible(true)}
                             >
                               View Details
                             </Button>
-                            <Button 
+                            <Button
                               type="default"
                               disabled={!isClassStartingSoon(upcomingClasses[0].startTime)}
                             >
@@ -719,11 +719,11 @@ const StudentDashboard = () => {
 
               {/* My Attendance Card */}
               <Col xs={24}>
-                <Card 
+                <Card
                   title="MY ATTENDANCE"
                   extra={
-                    <Button 
-                      type="link" 
+                    <Button
+                      type="link"
                       icon={<LineChartOutlined />}
                       onClick={() => setAttendanceModalVisible(true)}
                     >
@@ -772,25 +772,86 @@ const StudentDashboard = () => {
                   )}
                 </Card>
               </Col>
+              {/* Study Materials Card */}
+              <Col xs={24}>
+                <Card title="STUDY MATERIALS">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button icon={<FilePdfOutlined />} block style={{ textAlign: 'left' }}>
+                      PDF documents
+                    </Button>
+                    <Button icon={<VideoCameraOutlined />} block style={{ textAlign: 'left' }}>
+                      Video lessons
+                    </Button>
+                    <Button icon={<AudioOutlined />} block style={{ textAlign: 'left' }}>
+                      Audio files
+                    </Button>
+                  </Space>
+                </Card>
+              </Col>
+              {/* Certificates Card */}
+              <Col xs={24}>
+                <Card title="CERTIFICATES / ACHIEVEMENTS">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button icon={<TrophyOutlined />} block style={{ textAlign: 'left' }}>
+                      View certificates
+                    </Button>
+                    <Button icon={<LineChartOutlined />} block style={{ textAlign: 'left' }}>
+                      Track progress
+                    </Button>
+                  </Space>
+                </Card>
+              </Col>
+
             </Row>
           </Col>
 
-          {/* Right Side - Class Schedule Card */}
+          {/* Right Side */}
           <Col xs={24} lg={12}>
-            <Card 
-              title="CLASS SCHEDULE" 
-              extra={
-                <Button 
-                  type="link" 
-                  icon={<CalendarOutlined />}
-                  onClick={() => setAllClassesModalVisible(true)}
+            <Row gutter={[0, 24]}>
+              <Col xs={24}>
+                <Card
+                  title="CLASS SCHEDULE"
+                  extra={
+                    <Button
+                      type="link"
+                      icon={<CalendarOutlined />}
+                      onClick={() => setAllClassesModalVisible(true)}
+                    >
+                      View All
+                    </Button>
+                  }
                 >
-                  View All
-                </Button>
-              }
-            >
-              <CustomCalendar classes={allClasses} />
-            </Card>
+                  <CustomCalendar classes={allClasses} />
+                </Card>
+              </Col>
+              {/* Quizzes Card */}
+              <Col xs={24}>
+                <Card title="QUIZZES / ASSIGNMENTS">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
+                      Take quizzes
+                    </Button>
+                    <Button block style={{ textAlign: 'left' }}>
+                      Submit assignments
+                    </Button>
+                  </Space>
+                </Card>
+              </Col>
+              {/* Support Card */}
+              <Col xs={24}>
+                <Card title="SUPPORT">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
+                      Help Center
+                    </Button>
+                    <Button icon={<MailOutlined />} block style={{ textAlign: 'left' }}>
+                      Contact us
+                    </Button>
+                  </Space>
+                </Card>
+              </Col>
+
+            </Row>
           </Col>
 
           {/* Completed Sessions Card */}
@@ -834,65 +895,6 @@ const StudentDashboard = () => {
               )}
             </Card>
           </Col> */}
-
-          {/* Study Materials Card */}
-          <Col xs={24} md={12}>
-            <Card title="STUDY MATERIALS">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Button icon={<FilePdfOutlined />} block style={{ textAlign: 'left' }}>
-                  PDF documents
-                </Button>
-                <Button icon={<VideoCameraOutlined />} block style={{ textAlign: 'left' }}>
-                  Video lessons
-                </Button>
-                <Button icon={<AudioOutlined />} block style={{ textAlign: 'left' }}>
-                  Audio files
-                </Button>
-              </Space>
-            </Card>
-          </Col>
-
-          {/* Certificates Card */}
-          <Col xs={24} md={12}>
-            <Card title="CERTIFICATES / ACHIEVEMENTS">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Button icon={<TrophyOutlined />} block style={{ textAlign: 'left' }}>
-                  View certificates
-                </Button>
-                <Button icon={<LineChartOutlined />} block style={{ textAlign: 'left' }}>
-                  Track progress
-                </Button>
-              </Space>
-            </Card>
-          </Col>
-
-          {/* Quizzes Card */}
-          <Col xs={24} md={12}>
-            <Card title="QUIZZES / ASSIGNMENTS">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
-                  Take quizzes
-                </Button>
-                <Button block style={{ textAlign: 'left' }}>
-                  Submit assignments
-                </Button>
-              </Space>
-            </Card>
-          </Col>
-
-          {/* Support Card */}
-          <Col xs={24} md={12}>
-            <Card title="SUPPORT">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
-                  Help Center
-                </Button>
-                <Button icon={<MailOutlined />} block style={{ textAlign: 'left' }}>
-                  Contact us
-                </Button>
-              </Space>
-            </Card>
-          </Col>
         </Row>
 
         {/* Completed Sessions Modal */}
@@ -909,16 +911,16 @@ const StudentDashboard = () => {
           width={800}
         >
           {completedSessions.length > 0 ? (
-            <div style={{ 
-              maxHeight: '400px', 
+            <div style={{
+              maxHeight: '400px',
               overflowY: 'auto',
               paddingRight: '8px'
             }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 {completedSessions.map((session) => (
-                  <div key={session._id} style={{ 
-                    padding: '16px', 
-                    border: '1px solid #f0f0f0', 
+                  <div key={session._id} style={{
+                    padding: '16px',
+                    border: '1px solid #f0f0f0',
                     borderRadius: '8px',
                     backgroundColor: '#fafafa',
                     marginBottom: '12px'
@@ -962,16 +964,16 @@ const StudentDashboard = () => {
           width={900}
         >
           {studentAttendance?.history?.length > 0 ? (
-            <div style={{ 
-              maxHeight: '500px', 
+            <div style={{
+              maxHeight: '500px',
               overflowY: 'auto',
               paddingRight: '8px'
             }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 {studentAttendance.history.map((record) => (
-                  <div key={record._id} style={{ 
-                    padding: '16px', 
-                    border: '1px solid #f0f0f0', 
+                  <div key={record._id} style={{
+                    padding: '16px',
+                    border: '1px solid #f0f0f0',
                     borderRadius: '8px',
                     backgroundColor: '#fafafa',
                     marginBottom: '12px'
@@ -1047,16 +1049,16 @@ const StudentDashboard = () => {
           width={900}
         >
           {upcomingClasses.length > 0 ? (
-            <div style={{ 
-              maxHeight: '500px', 
+            <div style={{
+              maxHeight: '500px',
               overflowY: 'auto',
               paddingRight: '8px'
             }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 {upcomingClasses.map((cls, index) => (
-                  <div key={cls._id} style={{ 
-                    padding: '16px', 
-                    border: '1px solid #f0f0f0', 
+                  <div key={cls._id} style={{
+                    padding: '16px',
+                    border: '1px solid #f0f0f0',
                     borderRadius: '8px',
                     backgroundColor: '#fafafa',
                     marginBottom: '12px'
@@ -1089,7 +1091,7 @@ const StudentDashboard = () => {
                         </Tag>
                         <br />
                         <br />
-                        <Button 
+                        <Button
                           type="default"
                           disabled={!isClassStartingSoon(cls.startTime)}
                           style={{ marginTop: '8px' }}
@@ -1121,16 +1123,16 @@ const StudentDashboard = () => {
           width={900}
         >
           {allClasses.length > 0 ? (
-            <div style={{ 
-              maxHeight: '500px', 
+            <div style={{
+              maxHeight: '500px',
               overflowY: 'auto',
               paddingRight: '8px'
             }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 {allClasses.map((cls, index) => (
-                  <div key={cls._id} style={{ 
-                    padding: '16px', 
-                    border: '1px solid #f0f0f0', 
+                  <div key={cls._id} style={{
+                    padding: '16px',
+                    border: '1px solid #f0f0f0',
                     borderRadius: '8px',
                     backgroundColor: '#fafafa',
                     marginBottom: '12px'
@@ -1179,6 +1181,7 @@ const StudentDashboard = () => {
             <Empty description="No classes available" />
           )}
         </Modal>
+        
       </div>
     </div>
   );
