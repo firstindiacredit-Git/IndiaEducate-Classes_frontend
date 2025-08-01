@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './component/AuthProvider';
 import { CountriesProvider } from './component/CountriesApi';
+import { SocketProvider } from './component/SocketProvider';
 import Login from './pages/Student/Login';
 import Signup from './pages/Student/Signup';
 import AdminLogin from './pages/Admin/AdminLogin';
@@ -80,7 +81,9 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <CountriesProvider>
-          <AppRoutes />
+          <SocketProvider>
+            <AppRoutes />
+          </SocketProvider>
         </CountriesProvider>
       </AuthProvider>
     </BrowserRouter>

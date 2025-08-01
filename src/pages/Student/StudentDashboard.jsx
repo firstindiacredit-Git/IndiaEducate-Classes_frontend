@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
+import { useSocket } from '../../component/SocketProvider';
 import moment from 'moment';
 import {
   FilePdfOutlined,
@@ -394,6 +395,7 @@ const CustomCalendar = ({ classes, onDateClick }) => {
 
 const StudentDashboard = () => {
   const { profile } = useAuth();
+  const { socket, isConnected } = useSocket();
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [activeClass, setActiveClass] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -476,15 +478,63 @@ const StudentDashboard = () => {
     }
   };
 
+  // Socket.io real-time class updates
+  useEffect(() => {
+    if (socket && profile?.program) {
+      // Listen for class status changes
+      socket.on('class-status-changed', (data) => {
+        console.log('Received class status change:', data);
+        
+        // Update active class if it's the same class
+        if (activeClass && activeClass._id === data.classId) {
+          if (data.status === 'completed') {
+            setActiveClass(null);
+            message.info('Class has ended');
+          } else {
+            setActiveClass(prev => ({ ...prev, status: data.status, ...data.updates }));
+          }
+        }
+        
+        // Refresh classes data
+        fetchClasses();
+        fetchAllClasses();
+      });
+
+      // Listen for new class scheduled
+      socket.on('new-class-scheduled', (data) => {
+        console.log('New class scheduled:', data);
+        if (data.program === profile.program) {
+          message.info(`New class scheduled: ${data.title}`);
+          fetchClasses();
+          fetchAllClasses();
+        }
+      });
+
+      // Listen for class updates
+      socket.on('class-updated', (data) => {
+        console.log('Class updated:', data);
+        if (data.program === profile.program) {
+          message.info(`Class updated: ${data.title}`);
+          fetchClasses();
+          fetchAllClasses();
+        }
+      });
+
+      // Cleanup listeners
+      return () => {
+        socket.off('class-status-changed');
+        socket.off('new-class-scheduled');
+        socket.off('class-updated');
+      };
+    }
+  }, [socket, profile?.program, activeClass]);
+
   useEffect(() => {
     if (profile?.program) {
       fetchClasses();
       fetchStudentAttendance();
       fetchCompletedSessions();
       fetchAllClasses();
-      // Poll for active classes every minute
-      const interval = setInterval(fetchClasses, 60000);
-      return () => clearInterval(interval);
     }
   }, [profile?.program]);
 

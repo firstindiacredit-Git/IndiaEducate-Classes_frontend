@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import axios from 'axios';
 import moment from 'moment';
+import { useSocket } from '../../component/SocketProvider';
 
 
 const { Title, Text } = Typography;
@@ -12,6 +13,7 @@ const { Option } = Select;
 
 const UpcomingSessions = () => {
   const navigate = useNavigate();
+  const { socket, isConnected } = useSocket();
   const [loading, setLoading] = useState(true);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
@@ -93,8 +95,30 @@ const UpcomingSessions = () => {
 
   useEffect(() => {
     fetchUpcomingClasses();
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchUpcomingClasses, 30000);
+    
+    // Socket.io event listeners for real-time updates
+    if (socket && isConnected) {
+      // Listen for class status changes
+      socket.on('class-status-changed', (data) => {
+        console.log('Class status changed:', data);
+        message.info(`Class "${data.title}" status changed to ${data.status}`);
+        fetchUpcomingClasses();
+      });
+
+      // Listen for new class scheduled
+      socket.on('new-class-scheduled', (data) => {
+        console.log('New class scheduled:', data);
+        message.info(`New class "${data.title}" has been scheduled`);
+        fetchUpcomingClasses();
+      });
+
+      // Listen for class updates
+      socket.on('class-updated', (data) => {
+        console.log('Class updated:', data);
+        message.info(`Class "${data.title}" has been updated`);
+        fetchUpcomingClasses();
+      });
+    }
     
     // Real-time countdown for start buttons (every second)
     const countdownInterval = setInterval(() => {
@@ -102,47 +126,52 @@ const UpcomingSessions = () => {
       setUpcomingClasses(prev => [...prev]);
     }, 1000);
     
-      // Check for completed classes more frequently (every 10 seconds)
-  const completionCheckInterval = setInterval(() => {
-    const now = new Date();
-    const completedClasses = upcomingClasses.filter(classItem => {
-      if (classItem.status === 'ongoing') {
-        const startTime = new Date(classItem.startTime);
-        const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
-        return now > endTime;
-      }
-      return false;
-    });
-    
-    // Check for classes ending soon (1 minute warning)
-    const endingSoonClasses = upcomingClasses.filter(classItem => {
-      if (classItem.status === 'ongoing') {
-        const startTime = new Date(classItem.startTime);
-        const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
-        const oneMinuteBefore = new Date(endTime.getTime() - (1 * 60000));
-        return now >= oneMinuteBefore && now < endTime;
-      }
-      return false;
-    });
-    
-    if (completedClasses.length > 0) {
-      message.info('Some classes have been automatically ended due to time completion.');
-      fetchUpcomingClasses(); // Refresh the list
-    }
-    
-    if (endingSoonClasses.length > 0) {
-      endingSoonClasses.forEach(classItem => {
-        message.warning(`Class "${classItem.title}" will end in 1 minute!`);
+    // Check for completed classes more frequently (every 10 seconds)
+    const completionCheckInterval = setInterval(() => {
+      const now = new Date();
+      const completedClasses = upcomingClasses.filter(classItem => {
+        if (classItem.status === 'ongoing') {
+          const startTime = new Date(classItem.startTime);
+          const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
+          return now > endTime;
+        }
+        return false;
       });
-    }
-  }, 10000);
+      
+      // Check for classes ending soon (1 minute warning)
+      const endingSoonClasses = upcomingClasses.filter(classItem => {
+        if (classItem.status === 'ongoing') {
+          const startTime = new Date(classItem.startTime);
+          const endTime = new Date(startTime.getTime() + (classItem.duration * 60000));
+          const oneMinuteBefore = new Date(endTime.getTime() - (1 * 60000));
+          return now >= oneMinuteBefore && now < endTime;
+        }
+        return false;
+      });
+      
+      if (completedClasses.length > 0) {
+        message.info('Some classes have been automatically ended due to time completion.');
+        fetchUpcomingClasses(); // Refresh the list
+      }
+      
+      if (endingSoonClasses.length > 0) {
+        endingSoonClasses.forEach(classItem => {
+          message.warning(`Class "${classItem.title}" will end in 1 minute!`);
+        });
+      }
+    }, 10000);
     
     return () => {
-      clearInterval(interval);
+      // Clean up socket listeners
+      if (socket) {
+        socket.off('class-status-changed');
+        socket.off('new-class-scheduled');
+        socket.off('class-updated');
+      }
       clearInterval(countdownInterval);
       clearInterval(completionCheckInterval);
     };
-  }, [upcomingClasses]);
+  }, [socket, isConnected, upcomingClasses]);
 
   // Start class meeting
   const handleStartClass = async (classId) => {

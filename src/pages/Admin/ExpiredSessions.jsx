@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import axios from 'axios';
 import moment from 'moment';
+import { useSocket } from '../../component/SocketProvider';
 
 const { Title } = Typography;
 
 const ExpiredSessions = () => {
   const navigate = useNavigate();
+  const { socket, isConnected } = useSocket();
   const [loading, setLoading] = useState(true);
   const [expiredSessions, setExpiredSessions] = useState([]);
   const [selectedExpiredSession, setSelectedExpiredSession] = useState(null);
@@ -62,10 +64,34 @@ const ExpiredSessions = () => {
 
   useEffect(() => {
     fetchExpiredSessions();
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchExpiredSessions, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Socket.io event listeners for real-time updates
+    if (socket && isConnected) {
+      // Listen for class status changes (when classes become expired)
+      socket.on('class-status-changed', (data) => {
+        console.log('Class status changed:', data);
+        if (data.status === 'expired') {
+          message.info(`Class "${data.title}" has expired`);
+          fetchExpiredSessions();
+        }
+      });
+
+      // Listen for new expired classes
+      socket.on('new-expired-class', (data) => {
+        console.log('New expired class:', data);
+        message.info(`Class "${data.title}" has been marked as expired`);
+        fetchExpiredSessions();
+      });
+    }
+    
+    return () => {
+      // Clean up socket listeners
+      if (socket) {
+        socket.off('class-status-changed');
+        socket.off('new-expired-class');
+      }
+    };
+  }, [socket, isConnected]);
 
   // Expired sessions columns
   const expiredSessionsColumns = [
