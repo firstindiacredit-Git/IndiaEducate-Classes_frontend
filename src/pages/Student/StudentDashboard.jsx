@@ -10,7 +10,8 @@ import {
   LineChartOutlined,
   QuestionCircleOutlined,
   MailOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
@@ -64,13 +65,9 @@ const CustomCalendar = ({ classes, onDateClick }) => {
   const getDateStatus = (date) => {
     const dateClasses = getClassesForDate(date);
     const isCurrentDate = date.isSame(moment(), 'day');
-    const isPastDate = date.isBefore(moment(), 'day');
     
     if (isCurrentDate) return 'current';
-    if (dateClasses.length === 0) {
-      if (isPastDate) return 'expired';
-      return 'empty';
-    }
+    if (dateClasses.length === 0) return 'empty';
     
     const hasScheduled = dateClasses.some(cls => cls.status === 'scheduled');
     const hasCompleted = dateClasses.some(cls => cls.status === 'completed');
@@ -97,7 +94,6 @@ const CustomCalendar = ({ classes, onDateClick }) => {
       case 'current': return '#1890ff';
       case 'scheduled': return '#faad14';
       case 'completed': return '#52c41a';
-      case 'expired': return '#f5f5f5';
       default: return 'transparent';
     }
   };
@@ -107,7 +103,6 @@ const CustomCalendar = ({ classes, onDateClick }) => {
     const status = getDateStatus(date);
     switch (status) {
       case 'empty': return '#000000';
-      case 'expired': return '#999999';
       default: return '#ffffff';
     }
   };
@@ -118,7 +113,6 @@ const CustomCalendar = ({ classes, onDateClick }) => {
     const dateClasses = getClassesForDate(date);
     
     if (status === 'current') return 'Current Date';
-    if (status === 'expired') return 'Past Date';
     if (dateClasses.length === 0) return 'No classes';
     
     const scheduledCount = dateClasses.filter(cls => cls.status === 'scheduled').length;
@@ -409,7 +403,9 @@ const StudentDashboard = () => {
   const [completedSessionsModalVisible, setCompletedSessionsModalVisible] = useState(false);
   const [attendanceModalVisible, setAttendanceModalVisible] = useState(false);
   const [allClassesModalVisible, setAllClassesModalVisible] = useState(false);
+  const [upcomingClassesModalVisible, setUpcomingClassesModalVisible] = useState(false);
   const [allClasses, setAllClasses] = useState([]);
+  const [countdownKey, setCountdownKey] = useState(0);
   const firstName = profile?.fullName?.split(' ')[0] || 'Student';
 
   // Fetch upcoming classes
@@ -464,16 +460,14 @@ const StudentDashboard = () => {
   const fetchAllClasses = async () => {
     try {
       const studentProgram = profile?.program || '24-session';
-      const [upcomingRes, completedRes, expiredRes] = await Promise.all([
+      const [upcomingRes, completedRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
-        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/completed-sessions`),
-        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/expired-sessions`)
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/completed-sessions`)
       ]);
       
       const allClassesData = [
         ...upcomingRes.data,
-        ...completedRes.data.sessions,
-        ...expiredRes.data.sessions
+        ...completedRes.data.sessions
       ];
       
       setAllClasses(allClassesData);
@@ -494,18 +488,38 @@ const StudentDashboard = () => {
     }
   }, [profile?.program]);
 
+  // Countdown timer effect
+  useEffect(() => {
+    const countdownInterval = setInterval(() => {
+      setCountdownKey(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(countdownInterval);
+  }, []);
+
   // Function to format time until class starts
   const getTimeUntilClass = (startTime) => {
     const now = moment();
     const start = moment(startTime);
     const duration = moment.duration(start.diff(now));
     
-    if (duration.asHours() >= 24) {
-      return `${Math.floor(duration.asDays())} days`;
-    } else if (duration.asHours() >= 1) {
-      return `${Math.floor(duration.asHours())} hours`;
+    if (duration.asSeconds() <= 0) {
+      return 'Starting now';
+    }
+    
+    const days = Math.floor(duration.asDays());
+    const hours = duration.hours();
+    const minutes = duration.minutes();
+    const seconds = duration.seconds();
+    
+    if (days > 0) {
+      return `${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+    } else if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+    } else if (minutes > 0) {
+      return `${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
     } else {
-      return `${Math.floor(duration.asMinutes())} minutes`;
+      return `${seconds.toString().padStart(2, '0')}s`;
     }
   };
 
@@ -620,54 +634,149 @@ const StudentDashboard = () => {
         </div>
 
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
-          {/* Live Class Card */}
-          <Col xs={24} md={12}>
-            <Card title="LIVE CLASS" loading={loading}>
-              {activeClass ? (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Text strong>{activeClass.title}</Text>
-                  <Text type="success">Class is in progress!</Text>
-                  {activeClass.remainingTime > 0 ? (
-                    <>
-                      <Text type="warning">
-                        {activeClass.remainingTime} minutes remaining
-                      </Text>
-                      <Button 
-                        type="primary" 
-                        size="large"
-                        icon={<VideoCameraOutlined />}
-                        onClick={() => handleJoinClass(activeClass)}
-                        disabled={isJoined}
-                      >
-                        {isJoined ? 'Already Joined' : 'Join Now'}
-                      </Button>
-                    </>
+          {/* Left Side - Live Class and My Attendance */}
+          <Col xs={24} lg={12}>
+            <Row gutter={[0, 24]}>
+              {/* Live Class Card */}
+              <Col xs={24}>
+                <Card title="LIVE CLASS" loading={loading}>
+                  {activeClass ? (
+                    <div>
+                      <Row justify="space-between" align="middle">
+                        <Col span={16}>
+                          <Text strong style={{ fontSize: '16px' }}>{activeClass.title}</Text>
+                          <br />
+                          <Text type="secondary">
+                            {moment(activeClass.startTime).format('MMM DD, YYYY • h:mm A')} • {activeClass.duration} minutes
+                          </Text>
+                          <br />
+                          <Text type="success">Class is in progress!</Text>
+                          {activeClass.remainingTime > 0 && (
+                            <Text type="warning" style={{ display: 'block', marginTop: '4px' }}>
+                              {activeClass.remainingTime} minutes remaining
+                            </Text>
+                          )}
+                        </Col>
+                        <Col span={8} style={{ textAlign: 'right' }}>
+                          <Space direction="vertical" size="small">
+                            <Button 
+                              type="link" 
+                              icon={<InfoCircleOutlined />}
+                              onClick={() => setUpcomingClassesModalVisible(true)}
+                            >
+                              View Details
+                            </Button>
+                            <Button 
+                              type="primary"
+                              icon={<VideoCameraOutlined />}
+                              onClick={() => handleJoinClass(activeClass)}
+                              disabled={isJoined}
+                            >
+                              {isJoined ? 'Already Joined' : 'Join Now'}
+                            </Button>
+                          </Space>
+                        </Col>
+                      </Row>
+                    </div>
+                  ) : upcomingClasses[0] ? (
+                    <div>
+                      <Row justify="space-between" align="middle">
+                        <Col span={16}>
+                          <Text strong style={{ fontSize: '16px' }}>{upcomingClasses[0].title}</Text>
+                          <br />
+                          <Text type="secondary">
+                            {moment(upcomingClasses[0].startTime).format('MMM DD, YYYY • h:mm A')} • {upcomingClasses[0].duration} minutes
+                          </Text>
+                          <br />
+                                                  <Text key={countdownKey}>
+                          Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
+                        </Text>
+                        </Col>
+                        <Col span={8} style={{ textAlign: 'right' }}>
+                          <Space direction="vertical" size="small">
+                            <Button 
+                              type="link" 
+                              icon={<InfoCircleOutlined />}
+                              onClick={() => setUpcomingClassesModalVisible(true)}
+                            >
+                              View Details
+                            </Button>
+                            <Button 
+                              type="default"
+                              disabled={!isClassStartingSoon(upcomingClasses[0].startTime)}
+                            >
+                              {isClassStartingSoon(upcomingClasses[0].startTime) ? 'Waiting to Start' : 'Not Started Yet'}
+                            </Button>
+                          </Space>
+                        </Col>
+                      </Row>
+                    </div>
                   ) : (
-                    <Text type="secondary">Class has ended</Text>
+                    <Empty description="No upcoming classes scheduled" />
                   )}
-                </Space>
-              ) : upcomingClasses[0] ? (
-              <Space direction="vertical" style={{ width: '100%' }}>
-                  <Text strong>{upcomingClasses[0].title}</Text>
-                  <Text>
-                    Starts in {getTimeUntilClass(upcomingClasses[0].startTime)}
-                  </Text>
-                  <Button 
-                    type="default" 
-                    size="large" 
-                    disabled={!isClassStartingSoon(upcomingClasses[0].startTime)}
-                  >
-                    {isClassStartingSoon(upcomingClasses[0].startTime) ? 'Waiting to Start' : 'Not Started Yet'}
-                </Button>
-              </Space>
-              ) : (
-                <Empty description="No upcoming classes scheduled" />
-              )}
-            </Card>
+                </Card>
+              </Col>
+
+              {/* My Attendance Card */}
+              <Col xs={24}>
+                <Card 
+                  title="MY ATTENDANCE"
+                  extra={
+                    <Button 
+                      type="link" 
+                      icon={<LineChartOutlined />}
+                      onClick={() => setAttendanceModalVisible(true)}
+                    >
+                      View Details
+                    </Button>
+                  }
+                >
+                  {studentAttendance ? (
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Text strong style={{ fontSize: '24px', color: '#52c41a' }}>
+                              {studentAttendance.stats.present}
+                            </Text>
+                            <br />
+                            <Text type="secondary">Present</Text>
+                          </div>
+                        </Col>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Text strong style={{ fontSize: '24px', color: '#faad14' }}>
+                              {studentAttendance.stats.partial}
+                            </Text>
+                            <br />
+                            <Text type="secondary">Partial</Text>
+                          </div>
+                        </Col>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Text strong style={{ fontSize: '24px', color: '#ff4d4f' }}>
+                              {studentAttendance.stats.absent}
+                            </Text>
+                            <br />
+                            <Text type="secondary">Absent</Text>
+                          </div>
+                        </Col>
+                      </Row>
+                      <Divider />
+                      <Text>
+                        Attendance Rate: <Text strong>{studentAttendance.stats.attendancePercentage}%</Text>
+                      </Text>
+                    </Space>
+                  ) : (
+                    <Empty description="No attendance data available" />
+                  )}
+                </Card>
+              </Col>
+            </Row>
           </Col>
 
-          {/* Class Schedule Card */}
-          <Col xs={24} md={12}>
+          {/* Right Side - Class Schedule Card */}
+          <Col xs={24} lg={12}>
             <Card 
               title="CLASS SCHEDULE" 
               extra={
@@ -681,62 +790,6 @@ const StudentDashboard = () => {
               }
             >
               <CustomCalendar classes={allClasses} />
-            </Card>
-          </Col>
-
-          {/* My Attendance Card */}
-          <Col xs={24} md={12}>
-            <Card 
-              title="MY ATTENDANCE"
-              extra={
-                <Button 
-                  type="link" 
-                  icon={<LineChartOutlined />}
-                  onClick={() => setAttendanceModalVisible(true)}
-                >
-                  View Details
-                </Button>
-              }
-            >
-              {studentAttendance ? (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Row gutter={16}>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center' }}>
-                        <Text strong style={{ fontSize: '24px', color: '#52c41a' }}>
-                          {studentAttendance.stats.present}
-                        </Text>
-                        <br />
-                        <Text type="secondary">Present</Text>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center' }}>
-                        <Text strong style={{ fontSize: '24px', color: '#faad14' }}>
-                          {studentAttendance.stats.partial}
-                        </Text>
-                        <br />
-                        <Text type="secondary">Partial</Text>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center' }}>
-                        <Text strong style={{ fontSize: '24px', color: '#ff4d4f' }}>
-                          {studentAttendance.stats.absent}
-                        </Text>
-                        <br />
-                        <Text type="secondary">Absent</Text>
-                      </div>
-                    </Col>
-                  </Row>
-                  <Divider />
-                  <Text>
-                    Attendance Rate: <Text strong>{studentAttendance.stats.attendancePercentage}%</Text>
-                  </Text>
-                </Space>
-              ) : (
-                <Empty description="No attendance data available" />
-              )}
             </Card>
           </Col>
 
@@ -980,6 +1033,80 @@ const StudentDashboard = () => {
           )}
         </Modal>
 
+        {/* Upcoming Classes Modal */}
+        <Modal
+          title={
+            <Space>
+              <VideoCameraOutlined />
+              <span>Upcoming Classes</span>
+            </Space>
+          }
+          open={upcomingClassesModalVisible}
+          onCancel={() => setUpcomingClassesModalVisible(false)}
+          footer={null}
+          width={900}
+        >
+          {upcomingClasses.length > 0 ? (
+            <div style={{ 
+              maxHeight: '500px', 
+              overflowY: 'auto',
+              paddingRight: '8px'
+            }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {upcomingClasses.map((cls, index) => (
+                  <div key={cls._id} style={{ 
+                    padding: '16px', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: '8px',
+                    backgroundColor: '#fafafa',
+                    marginBottom: '12px'
+                  }}>
+                    <Row justify="space-between" align="middle">
+                      <Col span={16}>
+                        <Text strong style={{ fontSize: '16px' }}>
+                          #{index + 1} - {cls.title}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          {moment(cls.startTime).format('MMMM DD, YYYY')} at {moment(cls.startTime).format('h:mm A')}
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          Duration: {cls.duration} minutes
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          {cls.description || 'No description available'}
+                        </Text>
+                        <br />
+                        <Text type="warning" key={`modal-${cls._id}-${countdownKey}`}>
+                          Starts in {getTimeUntilClass(cls.startTime)}
+                        </Text>
+                      </Col>
+                      <Col span={8} style={{ textAlign: 'right' }}>
+                        <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
+                          SCHEDULED
+                        </Tag>
+                        <br />
+                        <br />
+                        <Button 
+                          type="default"
+                          disabled={!isClassStartingSoon(cls.startTime)}
+                          style={{ marginTop: '8px' }}
+                        >
+                          {isClassStartingSoon(cls.startTime) ? 'Can Start Soon' : 'Not Ready Yet'}
+                        </Button>
+                      </Col>
+                    </Row>
+                  </div>
+                ))}
+              </Space>
+            </div>
+          ) : (
+            <Empty description="No upcoming classes scheduled" />
+          )}
+        </Modal>
+
         {/* All Classes Modal */}
         <Modal
           title={
@@ -1040,11 +1167,6 @@ const StudentDashboard = () => {
                         {cls.status === 'ongoing' && (
                           <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
                             ONGOING
-                          </Tag>
-                        )}
-                        {cls.status === 'expired' && (
-                          <Tag color="red" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                            EXPIRED
                           </Tag>
                         )}
                       </Col>
