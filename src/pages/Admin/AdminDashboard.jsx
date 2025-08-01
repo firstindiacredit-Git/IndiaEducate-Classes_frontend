@@ -36,6 +36,7 @@ const AdminDashboard = () => {
   const [expiredSessionsCount, setExpiredSessionsCount] = useState(0);
   const [selectedExpiredSession, setSelectedExpiredSession] = useState(null);
   const [activeClass, setActiveClass] = useState(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
 
 
   // Function to check if a class should be expired or completed
@@ -142,6 +143,8 @@ const AdminDashboard = () => {
   // Handle class scheduling
   const handleScheduleClass = async (values) => {
     try {
+      setScheduleLoading(true);
+      
       if (!profile?._id) {
         message.error('Admin ID not found. Please try logging in again.');
         return;
@@ -173,6 +176,8 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Error scheduling class:', err);
       message.error(err.response?.data?.message || 'Failed to schedule class');
+    } finally {
+      setScheduleLoading(false);
     }
   };
 
@@ -374,7 +379,7 @@ const AdminDashboard = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" block>
+              <Button type="primary" htmlType="submit" block loading={scheduleLoading}>
                 Schedule Class
               </Button>
             </Form.Item>

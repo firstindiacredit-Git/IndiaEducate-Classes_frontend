@@ -21,6 +21,7 @@ const UpcomingSessions = () => {
   const [editForm] = Form.useForm();
   const [selectedUpcomingSession, setSelectedUpcomingSession] = useState(null);
   const [upcomingSessionDetailModalVisible, setUpcomingSessionDetailModalVisible] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
 
 
   // Function to format duration
@@ -222,6 +223,8 @@ const UpcomingSessions = () => {
   // Handle edit class
   const handleEditClass = async (values) => {
     try {
+      setEditLoading(true);
+      
       if (!selectedClass?._id) {
         message.error('No class selected for editing');
         return;
@@ -263,6 +266,8 @@ const UpcomingSessions = () => {
     } catch (err) {
       console.error('Error updating class:', err);
       message.error(err.response?.data?.message || 'Failed to update class');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -517,7 +522,7 @@ const UpcomingSessions = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" block>
+              <Button type="primary" htmlType="submit" block loading={editLoading}>
                 Update Class
               </Button>
             </Form.Item>
