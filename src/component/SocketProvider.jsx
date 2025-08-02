@@ -60,11 +60,27 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  const joinProfile = (studentEmail) => {
+    if (socket && studentEmail) {
+      socket.emit('join-profile', studentEmail);
+      // console.log('Joined profile room for:', studentEmail);
+    }
+  };
+
+  const leaveProfile = (studentEmail) => {
+    if (socket && studentEmail) {
+      socket.emit('leave-profile', studentEmail);
+      // console.log('Left profile room for:', studentEmail);
+    }
+  };
+
   const value = {
     socket,
     isConnected,
     joinNotifications,
-    leaveNotifications
+    leaveNotifications,
+    joinProfile,
+    leaveProfile
   };
 
   return (

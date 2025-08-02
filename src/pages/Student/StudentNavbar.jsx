@@ -14,7 +14,8 @@ import {
     ClockCircleOutlined,
     CheckCircleOutlined,
     ExclamationCircleOutlined,
-    VideoCameraOutlined
+    VideoCameraOutlined,
+    ReloadOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -23,7 +24,7 @@ const { Option } = Select;
 
 const StudentNavbar = () => {
     const { logout, profile, setProfile } = useAuth();
-    const { socket, isConnected, joinNotifications, leaveNotifications } = useSocket();
+    const { socket, isConnected, joinNotifications, leaveNotifications, joinProfile, leaveProfile } = useSocket();
     const navigate = useNavigate();
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [viewModalVisible, setViewModalVisible] = useState(false);
@@ -53,11 +54,35 @@ const StudentNavbar = () => {
         fetchProfile();
     }, [profile, setProfile]);
 
-    // Socket.io real-time notification handling
+    // Periodic profile refresh (every 30 seconds) as fallback
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            if (profile?.email) {
+                try {
+                    const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/student/profile`, { 
+                        emailOrPhone: profile.email 
+                    });
+                    // Only update if there are actual changes
+                    if (JSON.stringify(res.data) !== JSON.stringify(profile)) {
+                        setProfile(res.data);
+                    }
+                } catch (err) {
+                    // Silently handle error for periodic refresh
+                }
+            }
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
+    }, [profile?.email, setProfile]);
+
+    // Socket.io real-time notification and profile handling
     useEffect(() => {
         if (socket && profile?.email) {
             // Join notifications room for this student
             joinNotifications(profile.email);
+            
+            // Join profile room for this student
+            joinProfile(profile.email);
 
             // Listen for new notifications
             socket.on('new-notification', (data) => {
@@ -97,16 +122,27 @@ const StudentNavbar = () => {
                 );
             });
 
+            // Listen for profile updates from admin
+            socket.on('profile-updated', (data) => {
+                // console.log('Profile updated by admin:', data);
+                if (data.profile) {
+                    setProfile(data.profile);
+                    message.success('Your profile has been updated by admin');
+                }
+            });
+
             // Cleanup listeners on unmount or email change
             return () => {
                 socket.off('new-notification');
                 socket.off('notification-read');
                 socket.off('all-notifications-read');
                 socket.off('notification-deleted');
+                socket.off('profile-updated');
                 leaveNotifications(profile.email);
+                leaveProfile(profile.email);
             };
         }
-    }, [socket, profile?.email, joinNotifications, leaveNotifications]);
+    }, [socket, profile?.email, joinNotifications, leaveNotifications, joinProfile, leaveProfile, setProfile]);
 
     // Fetch notifications on component mount
     const fetchNotifications = async () => {
@@ -160,6 +196,19 @@ const StudentNavbar = () => {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleRefreshProfile = async () => {
+        if (!profile?.email) return;
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/student/profile`, { 
+                emailOrPhone: profile.email 
+            });
+            setProfile(res.data);
+            message.success('Profile refreshed successfully');
+        } catch (err) {
+            message.error('Failed to refresh profile');
+        }
     };
 
     const showEditModal = () => {
@@ -292,6 +341,9 @@ const StudentNavbar = () => {
             <Menu.Item key="view" onClick={showViewModal} icon={<EyeOutlined />}>
                 View Profile
             </Menu.Item>
+            {/* <Menu.Item key="refresh" onClick={handleRefreshProfile} icon={<ReloadOutlined />}>
+                Refresh Profile
+            </Menu.Item> */}
             {/* <Menu.Item key="edit" onClick={showEditModal} icon={<EditOutlined />}>
                 Edit Profile
             </Menu.Item> */}
@@ -474,6 +526,14 @@ const StudentNavbar = () => {
                 open={viewModalVisible}
                 onCancel={() => setViewModalVisible(false)}
                 footer={[
+                    <Button 
+                        type="default" 
+                        icon={<ReloadOutlined />} 
+                        // style={{ float: 'right', marginLeft: 8 }}
+                        onClick={handleRefreshProfile}
+                    >
+                        Refresh Profile
+                    </Button>,
                     <Button key="edit" type="primary" onClick={() => {
                         setViewModalVisible(false);
                         showEditModal();
