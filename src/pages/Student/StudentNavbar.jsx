@@ -220,6 +220,15 @@ const StudentNavbar = () => {
         return `${days}d ago`;
     };
 
+    // Function to format notification time with timezone
+    const formatNotificationTime = (notification) => {
+        // If notification has timezone metadata, use it
+        if (notification.metadata && notification.metadata.timezone) {
+            return notification.metadata.localStartTime || formatTimestamp(notification.timestamp || notification.createdAt);
+        }
+        return formatTimestamp(notification.timestamp || notification.createdAt);
+    };
+
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
     const beforeUpload = (file) => {
@@ -419,7 +428,7 @@ const StudentNavbar = () => {
                                                     {notification.title}
                                                 </span>
                                                 <span style={{ fontSize: '12px', color: '#999' }}>
-                                                    {formatTimestamp(notification.timestamp || notification.createdAt)}
+                                                    {formatNotificationTime(notification)}
                                                 </span>
                                             </div>
                                         }
