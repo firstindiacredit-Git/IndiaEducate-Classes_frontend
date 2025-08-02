@@ -47,7 +47,7 @@ const ExpiredSessions = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/expired-sessions`);
-      console.log('Expired sessions:', response.data);
+      // console.log('Expired sessions:', response.data);
       setExpiredSessions(response.data.sessions);
     } catch (err) {
       console.error('Error fetching expired sessions:', err);
@@ -70,7 +70,7 @@ const ExpiredSessions = () => {
     if (socket && isConnected) {
       // Listen for class status changes (when classes become expired)
       socket.on('class-status-changed', (data) => {
-        console.log('Class status changed:', data);
+        // console.log('Class status changed:', data);
         if (data.status === 'expired') {
           message.info(`Class "${data.title}" has expired`);
           fetchExpiredSessions();
@@ -79,7 +79,7 @@ const ExpiredSessions = () => {
 
       // Listen for new expired classes
       socket.on('new-expired-class', (data) => {
-        console.log('New expired class:', data);
+        // console.log('New expired class:', data);
         message.info(`Class "${data.title}" has been marked as expired`);
         fetchExpiredSessions();
       });

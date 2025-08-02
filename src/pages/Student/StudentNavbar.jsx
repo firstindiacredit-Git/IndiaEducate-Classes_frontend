@@ -61,7 +61,7 @@ const StudentNavbar = () => {
 
             // Listen for new notifications
             socket.on('new-notification', (data) => {
-                console.log('Received new notification:', data);
+                // console.log('Received new notification:', data);
                 setNotifications(prev => [data.notification, ...prev]);
                 setNotificationCount(prev => prev + data.unreadCount);
                 

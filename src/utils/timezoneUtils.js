@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 // Country to timezone mapping (same as backend)
 const countryToTimezone = {
@@ -218,7 +218,7 @@ export const getTimezoneFromCountry = (countryName) => {
   }
   
   // Default to UTC if no match found
-  console.log(`No timezone found for country: ${countryName}, using UTC`);
+  // console.log(`No timezone found for country: ${countryName}, using UTC`);
   return 'UTC';
 };
 

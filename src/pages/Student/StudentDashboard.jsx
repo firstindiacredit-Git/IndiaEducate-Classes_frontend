@@ -3,6 +3,7 @@ import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, messag
 import { useAuth } from '../../component/AuthProvider';
 import { useSocket } from '../../component/SocketProvider';
 import moment from 'moment';
+import { formatTimeForStudent } from '../../utils/timezoneUtils';
 import {
   FilePdfOutlined,
   VideoCameraOutlined,
@@ -295,7 +296,10 @@ const CustomCalendar = ({ classes, onDateClick }) => {
                     <Text strong style={{ fontSize: '16px' }}>{cls.title}</Text>
                     <br />
                     <Text type="secondary">
-                      {moment(cls.startTime).format('h:mm A')} • {cls.duration} minutes
+                      {(() => {
+                        const timeInfo = formatTimeForStudent(cls.startTime, profile?.country);
+                        return `${timeInfo.time} ${timeInfo.timezone} • ${cls.duration} minutes`;
+                      })()}
                     </Text>
                     <br />
                     <Text type="secondary">
@@ -419,16 +423,16 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       const studentProgram = profile?.program || '24-session';
-      console.log('Student program:', studentProgram);
-      console.log('Fetching classes for program:', studentProgram);
+      // console.log('Student program:', studentProgram);
+      // console.log('Fetching classes for program:', studentProgram);
 
       const [upcomingRes, activeRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/${studentProgram}`),
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/active/${studentProgram}`)
       ]);
 
-      console.log('Upcoming classes response:', upcomingRes.data);
-      console.log('Active class response:', activeRes.data);
+      // console.log('Upcoming classes response:', upcomingRes.data);
+      // console.log('Active class response:', activeRes.data);
 
       setUpcomingClasses(upcomingRes.data);
       setActiveClass(activeRes.data);
@@ -449,7 +453,7 @@ const StudentDashboard = () => {
       setStudentAttendance(response.data);
       
       // Log attendance data for debugging
-      console.log('Student attendance data:', response.data);
+      // console.log('Student attendance data:', response.data);
     } catch (err) {
       console.error('Error fetching student attendance:', err);
       message.error('Failed to load attendance data. Please try refreshing the page.');
@@ -565,7 +569,7 @@ const StudentDashboard = () => {
     if (socket && profile?.program) {
       // Listen for class status changes
       socket.on('class-status-changed', (data) => {
-        console.log('Received class status change:', data);
+        // console.log('Received class status change:', data);
         
         // Update active class if it's the same class
         if (activeClass && activeClass._id === data.classId) {
@@ -584,7 +588,7 @@ const StudentDashboard = () => {
 
       // Listen for new class scheduled
       socket.on('new-class-scheduled', (data) => {
-        console.log('New class scheduled:', data);
+        // console.log('New class scheduled:', data);
         if (data.program === profile.program) {
           message.info(`New class scheduled: ${data.title}`);
           fetchClasses();
@@ -594,7 +598,7 @@ const StudentDashboard = () => {
 
       // Listen for class updates
       socket.on('class-updated', (data) => {
-        console.log('Class updated:', data);
+        // console.log('Class updated:', data);
         if (data.program === profile.program) {
           message.info(`Class updated: ${data.title}`);
           fetchClasses();
@@ -850,7 +854,10 @@ const StudentDashboard = () => {
                           <Text strong style={{ fontSize: '16px' }}>{activeClass.title}</Text>
                           <br />
                           <Text type="secondary">
-                            {moment(activeClass.startTime).format('MMM DD, YYYY • h:mm A')} • {activeClass.duration} minutes
+                            {(() => {
+                              const timeInfo = formatTimeForStudent(activeClass.startTime, profile?.country);
+                              return `${timeInfo.date} • ${timeInfo.time} ${timeInfo.timezone} • ${activeClass.duration} minutes`;
+                            })()}
                           </Text>
                           <br />
                           <Text type="success">Class is in progress!</Text>
@@ -888,7 +895,10 @@ const StudentDashboard = () => {
                           <Text strong style={{ fontSize: '16px' }}>{upcomingClasses[0].title}</Text>
                           <br />
                           <Text type="secondary">
-                            {moment(upcomingClasses[0].startTime).format('MMM DD, YYYY • h:mm A')} • {upcomingClasses[0].duration} minutes
+                            {(() => {
+                              const timeInfo = formatTimeForStudent(upcomingClasses[0].startTime, profile?.country);
+                              return `${timeInfo.date} • ${timeInfo.time} ${timeInfo.timezone} • ${upcomingClasses[0].duration} minutes`;
+                            })()}
                           </Text>
                           <br />
                           <Text key={countdownKey}>
@@ -1311,7 +1321,10 @@ const StudentDashboard = () => {
                         </Text>
                         <br />
                         <Text type="secondary">
-                          {moment(cls.startTime).format('MMMM DD, YYYY')} at {moment(cls.startTime).format('h:mm A')}
+                          {(() => {
+                            const timeInfo = formatTimeForStudent(cls.startTime, profile?.country);
+                            return `${timeInfo.date} at ${timeInfo.time} ${timeInfo.timezone}`;
+                          })()}
                         </Text>
                         <br />
                         <Text type="secondary">
@@ -1385,7 +1398,10 @@ const StudentDashboard = () => {
                         </Text>
                         <br />
                         <Text type="secondary">
-                          {moment(cls.startTime).format('MMMM DD, YYYY')} at {moment(cls.startTime).format('h:mm A')}
+                          {(() => {
+                            const timeInfo = formatTimeForStudent(cls.startTime, profile?.country);
+                            return `${timeInfo.date} at ${timeInfo.time} ${timeInfo.timezone}`;
+                          })()}
                         </Text>
                         <br />
                         <Text type="secondary">

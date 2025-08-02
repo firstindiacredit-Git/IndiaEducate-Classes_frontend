@@ -80,7 +80,7 @@ const UpcomingSessions = () => {
   // Fetch upcoming classes
   const fetchUpcomingClasses = async () => {
     try {
-      console.log('Fetching upcoming classes...');
+      // console.log('Fetching upcoming classes...');
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/all`);
       
 
@@ -101,21 +101,21 @@ const UpcomingSessions = () => {
     if (socket && isConnected) {
       // Listen for class status changes
       socket.on('class-status-changed', (data) => {
-        console.log('Class status changed:', data);
+        // console.log('Class status changed:', data);
         message.info(`Class "${data.title}" status changed to ${data.status}`);
         fetchUpcomingClasses();
       });
 
       // Listen for new class scheduled
       socket.on('new-class-scheduled', (data) => {
-        console.log('New class scheduled:', data);
+        // console.log('New class scheduled:', data);
         message.info(`New class "${data.title}" has been scheduled`);
         fetchUpcomingClasses();
       });
 
       // Listen for class updates
       socket.on('class-updated', (data) => {
-        console.log('Class updated:', data);
+        // console.log('Class updated:', data);
         message.info(`Class "${data.title}" has been updated`);
         fetchUpcomingClasses();
       });
@@ -177,7 +177,7 @@ const UpcomingSessions = () => {
   // Start class meeting
   const handleStartClass = async (classId) => {
     try {
-      console.log('Starting class:', classId);
+      // console.log('Starting class:', classId);
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/classes/start/${classId}`);
       const { meetingLink } = response.data.schedule;
       
@@ -244,19 +244,19 @@ const UpcomingSessions = () => {
         return;
       }
 
-      console.log('Editing class with values:', values);
+      // console.log('Editing class with values:', values);
       const payload = {
         ...values,
         duration: duration,
         startTime: startTime.toISOString()
       };
-      console.log('Sending payload:', payload);
+      // console.log('Sending payload:', payload);
 
       const response = await axios.put(
         `${import.meta.env.VITE_BASE_URL}/api/classes/update/${selectedClass._id}`,
         payload
       );
-      console.log('Class updated response:', response.data);
+      // console.log('Class updated response:', response.data);
       
       message.success('Class updated successfully');
       setEditModalVisible(false);

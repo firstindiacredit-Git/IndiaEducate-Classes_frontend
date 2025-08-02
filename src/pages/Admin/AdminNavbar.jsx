@@ -115,7 +115,7 @@ const AdminNavbar = () => {
     useEffect(() => {
         if (socket && isConnected) {
             socket.on('admin-new-notification', (data) => {
-                console.log('New admin notification:', data);
+                // console.log('New admin notification:', data);
                 setNotifications(prev => [data.notification, ...prev]);
                 setUnreadCount(prev => prev + 1);
                 message.info(data.notification.title);
@@ -148,15 +148,15 @@ const AdminNavbar = () => {
     const fetchProfileData = async () => {
         const emailOrPhone = localStorage.getItem('adminEmailOrPhone');
         if (!emailOrPhone) {
-            console.log('No emailOrPhone found in localStorage');
+            // console.log('No emailOrPhone found in localStorage');
             return;
         }
         
         setFetchingProfile(true);
         try {
-            console.log('Fetching profile for:', emailOrPhone);
+            // console.log('Fetching profile for:', emailOrPhone);
             const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/profile`, { emailOrPhone });
-            console.log('Profile API response:', res.data);
+            // console.log('Profile API response:', res.data);
             
             if (res.data) {
                 setProfile(res.data);

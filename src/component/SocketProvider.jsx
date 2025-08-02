@@ -24,12 +24,12 @@ export const SocketProvider = ({ children }) => {
 
     // Connection event handlers
     newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
+      // console.log('Socket connected:', newSocket.id);
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      // console.log('Socket disconnected');
       setIsConnected(false);
     });
 
@@ -49,14 +49,14 @@ export const SocketProvider = ({ children }) => {
   const joinNotifications = (studentEmail) => {
     if (socket && studentEmail) {
       socket.emit('join-notifications', studentEmail);
-      console.log('Joined notifications room for:', studentEmail);
+      // console.log('Joined notifications room for:', studentEmail);
     }
   };
 
   const leaveNotifications = (studentEmail) => {
     if (socket && studentEmail) {
       socket.emit('leave-notifications', studentEmail);
-      console.log('Left notifications room for:', studentEmail);
+      // console.log('Left notifications room for:', studentEmail);
     }
   };
 

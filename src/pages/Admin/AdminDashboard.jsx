@@ -73,7 +73,7 @@ const AdminDashboard = () => {
   // Fetch upcoming classes with status check
   const fetchUpcomingClasses = async () => {
     try {
-      console.log('Fetching upcoming classes...');
+      // console.log('Fetching upcoming classes...');
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/all`);
       
       // Check if any active class has ended
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
   const fetchExpiredSessions = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/expired-sessions`);
-      console.log('Expired sessions:', response.data);
+      // console.log('Expired sessions:', response.data);
       setExpiredSessions(response.data.sessions);
       setExpiredSessionsCount(response.data.totalExpired);
     } catch (err) {
@@ -218,17 +218,17 @@ const AdminDashboard = () => {
         return;
       }
 
-      console.log('Scheduling class with values:', values);
+      // console.log('Scheduling class with values:', values);
       const payload = {
         ...values,
         duration: duration,
         startTime: values.startTime.toISOString(),
         adminId: profile._id
       };
-      console.log('Sending payload:', payload);
+      // console.log('Sending payload:', payload);
 
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/classes/create`, payload);
-      console.log('Class scheduled response:', response.data);
+      // console.log('Class scheduled response:', response.data);
       
       message.success('Class scheduled successfully');
       setScheduleModalVisible(false);
