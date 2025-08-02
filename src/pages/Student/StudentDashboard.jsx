@@ -12,7 +12,11 @@ import {
   QuestionCircleOutlined,
   MailOutlined,
   CalendarOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  ReloadOutlined,
+  CheckCircleOutlined,
+  FieldTimeOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
@@ -436,15 +440,31 @@ const StudentDashboard = () => {
     }
   };
 
-  // Fetch student's attendance history
+  // Fetch student attendance with better error handling
   const fetchStudentAttendance = async () => {
     try {
       if (!profile?._id) return;
 
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/attendance/student/${profile._id}`);
       setStudentAttendance(response.data);
+      
+      // Log attendance data for debugging
+      console.log('Student attendance data:', response.data);
     } catch (err) {
       console.error('Error fetching student attendance:', err);
+      message.error('Failed to load attendance data. Please try refreshing the page.');
+    }
+  };
+
+  // Refresh attendance data
+  const refreshAttendance = async () => {
+    try {
+      message.loading('Refreshing attendance data...', 1);
+      await fetchStudentAttendance();
+      message.success('Attendance data refreshed successfully');
+    } catch (err) {
+      console.error('Error refreshing attendance:', err);
+      message.error('Failed to refresh attendance data');
     }
   };
 
@@ -905,13 +925,23 @@ const StudentDashboard = () => {
                 <Card
                   title="MY ATTENDANCE"
                   extra={
-                    <Button
-                      type="link"
-                      icon={<LineChartOutlined />}
-                      onClick={() => setAttendanceModalVisible(true)}
-                    >
-                      View Details
-                    </Button>
+                    <Space>
+                      <Button
+                        type="default"
+                        icon={<ReloadOutlined />}
+                        onClick={refreshAttendance}
+                        size="small"
+                      >
+                        Refresh
+                      </Button>
+                      <Button
+                        type="link"
+                        icon={<LineChartOutlined />}
+                        onClick={() => setAttendanceModalVisible(true)}
+                      >
+                        View Details
+                      </Button>
+                    </Space>
                   }
                 >
                   {studentAttendance ? (
@@ -946,9 +976,18 @@ const StudentDashboard = () => {
                         </Col>
                       </Row>
                       <Divider />
-                      <Text>
-                        Attendance Rate: <Text strong>{studentAttendance.stats.attendancePercentage}%</Text>
-                      </Text>
+                      <Row justify="space-between" align="middle">
+                        <Col>
+                          <Text>
+                            Attendance Rate: <Text strong>{studentAttendance.stats.attendancePercentage}%</Text>
+                          </Text>
+                        </Col>
+                        <Col>
+                          <Text type="secondary">
+                            Total Classes: {studentAttendance.stats.totalClasses}
+                          </Text>
+                        </Col>
+                      </Row>
                     </Space>
                   ) : (
                     <Empty description="No attendance data available" />
@@ -1172,7 +1211,11 @@ const StudentDashboard = () => {
                         </Text>
                         <br />
                         <Text type="secondary">
-                          Duration: {record.duration || 0} minutes
+                          Class Duration: {record.classId?.duration || 0} minutes
+                        </Text>
+                        <br />
+                        <Text type="secondary">
+                          Your Duration: {record.duration || 0} minutes
                         </Text>
                         {record.joinTime && (
                           <>
@@ -1190,23 +1233,38 @@ const StudentDashboard = () => {
                             </Text>
                           </>
                         )}
+                        {!record.joinTime && (
+                          <>
+                            <br />
+                            <Text type="danger">
+                              Did not join this class
+                            </Text>
+                          </>
+                        )}
                       </Col>
                       <Col span={8} style={{ textAlign: 'right' }}>
                         {record.status === 'present' && (
                           <Tag color="green" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                            Present
+                            <CheckCircleOutlined /> Present
                           </Tag>
                         )}
                         {record.status === 'partial' && (
                           <Tag color="orange" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                            Partial
+                            <FieldTimeOutlined /> Partial
                           </Tag>
                         )}
                         {record.status === 'absent' && (
                           <Tag color="red" style={{ fontSize: '14px', padding: '4px 8px' }}>
-                            Absent
+                            <CloseCircleOutlined /> Absent
                           </Tag>
                         )}
+                        <br />
+                        <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                          {record.duration > 0 ? 
+                            `${Math.round((record.duration / (record.classId?.duration || 1)) * 100)}% attended` : 
+                            'No attendance'
+                          }
+                        </Text>
                       </Col>
                     </Row>
                   </div>
