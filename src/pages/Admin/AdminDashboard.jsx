@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Row, Col, Statistic, message, Button, Modal, Form, Input, DatePicker, Select } from 'antd';
+import { Typography, Card, Row, Col, Statistic, message, Button, Modal, Form, Input, DatePicker, Select, Alert } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
@@ -12,6 +12,8 @@ import {
   ClockCircleOutlined,
   VideoCameraOutlined,
   WarningOutlined,
+  TeamOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -38,6 +40,9 @@ const AdminDashboard = () => {
   const [activeClass, setActiveClass] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
+  // Monitor active connections and detect issues
+  const [activeConnections, setActiveConnections] = useState(0);
+  const [connectionIssues, setConnectionIssues] = useState([]);
 
   // Function to check if a class should be expired or completed
   const checkClassStatus = (classData) => {
@@ -75,7 +80,7 @@ const AdminDashboard = () => {
       if (activeClass) {
         const status = checkClassStatus(activeClass);
         if (status === 'completed') {
-          setJitsiModalVisible(false);
+          // setJitsiModalVisible(false); // This state is not defined in the original file
           setActiveClass(null);
           message.info('Class has ended due to duration completion');
         }
@@ -137,6 +142,62 @@ const AdminDashboard = () => {
     // Poll for updates every 30 seconds
     // const interval = setInterval(fetchData, 30000);
     // return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const checkActiveConnections = async () => {
+      try {
+        // Get all ongoing classes
+        const ongoingClasses = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/ongoing`);
+        
+        let totalConnections = 0;
+        const issues = [];
+
+        for (const classData of ongoingClasses.data) {
+          // Get attendance for this class
+          const attendance = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/attendance/class/${classData._id}`);
+          const activeStudents = attendance.data.attendance.filter(a => a.status === 'partial').length;
+          totalConnections += activeStudents;
+
+          // Check for potential issues
+          if (activeStudents > 50) {
+            issues.push({
+              classId: classData._id,
+              className: classData.title,
+              activeStudents,
+              issue: 'High number of active students - potential performance issues'
+            });
+          }
+
+          // Check for students who joined but haven't left (potential crash victims)
+          const stuckStudents = attendance.data.attendance.filter(a => 
+            a.status === 'partial' && 
+            !a.leaveTime && 
+            new Date() - new Date(a.joinTime) > 30 * 60 * 1000 // More than 30 minutes
+          );
+
+          if (stuckStudents.length > 0) {
+            issues.push({
+              classId: classData._id,
+              className: classData.title,
+              stuckStudents: stuckStudents.length,
+              issue: 'Students may have crashed or lost connection'
+            });
+          }
+        }
+
+        setActiveConnections(totalConnections);
+        setConnectionIssues(issues);
+      } catch (err) {
+        console.error('Error checking active connections:', err);
+      }
+    };
+
+    // Check every 30 seconds
+    const interval = setInterval(checkActiveConnections, 30000);
+    checkActiveConnections(); // Initial check
+
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -271,8 +332,76 @@ const AdminDashboard = () => {
               />
             </Card>
           </Col>
+
+          {/* Active Connections Monitoring */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              style={{ 
+                borderColor: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a',
+                borderWidth: '2px'
+              }}
+            >
+              <Statistic
+                title="Active Connections"
+                value={activeConnections}
+                prefix={<TeamOutlined style={{ 
+                  color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                }} />}
+                valueStyle={{ 
+                  color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                }}
+                suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
+              />
+            </Card>
+          </Col>
+
+          {/* Connection Issues */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              style={{ 
+                borderColor: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a',
+                borderWidth: '2px'
+              }}
+            >
+              <Statistic
+                title="Connection Issues"
+                value={connectionIssues.length}
+                prefix={<ExclamationCircleOutlined style={{ 
+                  color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
+                }} />}
+                valueStyle={{ 
+                  color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
+                }}
+              />
+            </Card>
+          </Col>
         </Row>
 
+        {/* Connection Issues Alert */}
+        {connectionIssues.length > 0 && (
+          <Row style={{ marginTop: 16 }}>
+            <Col span={24}>
+              <Alert
+                message="Connection Issues Detected"
+                description={
+                  <div>
+                    {connectionIssues.map((issue, index) => (
+                      <div key={index} style={{ marginBottom: 8 }}>
+                        <strong>{issue.className}:</strong> {issue.issue}
+                        {issue.activeStudents && ` (${issue.activeStudents} students)`}
+                        {issue.stuckStudents && ` (${issue.stuckStudents} stuck students)`}
+                      </div>
+                    ))}
+                  </div>
+                }
+                type="warning"
+                showIcon
+                closable
+                style={{ marginBottom: 16 }}
+              />
+            </Col>
+          </Row>
+        )}
         
         {/* Schedule Class Modal */}
         <Modal

@@ -478,6 +478,68 @@ const StudentDashboard = () => {
     }
   };
 
+  // Handle browser crash recovery and session restoration
+  useEffect(() => {
+    const checkForActiveSessions = async () => {
+      try {
+        const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
+        
+        if (joinedClasses.length > 0) {
+          // Check if any of these classes are still ongoing
+          const ongoingClasses = allClasses.filter(cls => 
+            cls.status === 'ongoing' && joinedClasses.includes(cls._id)
+          );
+
+          if (ongoingClasses.length > 0) {
+            message.info('Detected active class session. Attempting to restore connection...');
+            
+            // For each ongoing class, try to reconnect
+            for (const classData of ongoingClasses) {
+              try {
+                await handleReconnect(classData);
+              } catch (err) {
+                console.error(`Failed to reconnect to class ${classData.title}:`, err);
+              }
+            }
+          } else {
+            // Clear localStorage if no ongoing classes
+            localStorage.removeItem('joinedClasses');
+          }
+        }
+      } catch (err) {
+        console.error('Error checking for active sessions:', err);
+      }
+    };
+
+    // Check for active sessions when component mounts
+    if (allClasses.length > 0) {
+      checkForActiveSessions();
+    }
+  }, [allClasses]);
+
+  // Handle page visibility change (when user switches tabs or browser crashes)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Page became visible again, check if we need to reconnect
+        const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
+        const ongoingClasses = allClasses.filter(cls => 
+          cls.status === 'ongoing' && joinedClasses.includes(cls._id)
+        );
+
+        if (ongoingClasses.length > 0) {
+          message.info('Page restored. Checking class connections...');
+          // You can add additional reconnection logic here if needed
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [allClasses]);
+
   // Socket.io real-time class updates
   useEffect(() => {
     if (socket && profile?.program) {
@@ -584,26 +646,92 @@ const StudentDashboard = () => {
   // Handle join class
   const handleJoinClass = async (classData) => {
     try {
-      // Record join time
-      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
+      // Check if we already joined this class (stored in localStorage)
+      const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
+      const isReconnect = joinedClasses.includes(classData._id);
+      
+      // Record join time or handle reconnection
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
         classId: classData._id,
-        studentId: profile._id
+        studentId: profile._id,
+        isReconnect
       });
 
-      setIsJoined(true);
-      message.success('Join time recorded successfully');
+      // Store class ID in localStorage to track joined classes
+      if (!joinedClasses.includes(classData._id)) {
+        joinedClasses.push(classData._id);
+        localStorage.setItem('joinedClasses', JSON.stringify(joinedClasses));
+      }
 
-      // Open meeting in new tab
-      window.open(classData.meetingLink, '_blank');
+      setIsJoined(true);
+      
+      if (isReconnect) {
+        message.success('Reconnected to class successfully');
+      } else {
+        message.success('Join time recorded successfully');
+      }
+
+      // Open meeting in new tab with optimized Jitsi settings
+      const optimizedMeetingLink = `${classData.meetingLink}#config.prejoinPageEnabled=false&config.disableAudioLevels=true&config.maxFullResolutionParticipants=4&config.maxThumbnailResolution=180&config.resolution=720&config.constraints.video.width.ideal=1280&config.constraints.video.height.ideal=720&config.constraints.video.frameRate.ideal=15&config.constraints.video.frameRate.max=30&config.p2p.enabled=false&config.websocket=wss://meet.jit.si/xmpp-websocket&config.websocketKeepAlive=30&config.websocketKeepAliveUrl=https://meet.jit.si/ping&config.websocketKeepAliveInterval=30`;
+      
+      const meetingWindow = window.open(optimizedMeetingLink, '_blank');
 
       // Set up leave tracking when user closes tab
       window.addEventListener('beforeunload', () => {
         handleLeaveClass(classData);
       });
 
+      // Handle meeting window close
+      if (meetingWindow) {
+        const checkWindowClosed = setInterval(() => {
+          if (meetingWindow.closed) {
+            clearInterval(checkWindowClosed);
+            handleLeaveClass(classData);
+          }
+        }, 1000);
+      }
+
     } catch (err) {
       console.error('Error joining class:', err);
-      message.error('Failed to record join time');
+      
+      // If it's a network error or browser crash, try reconnection
+      if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
+        message.warning('Connection lost. Attempting to reconnect...');
+        
+        // Try reconnection after 3 seconds
+        setTimeout(async () => {
+          try {
+            await handleReconnect(classData);
+          } catch (reconnectErr) {
+            console.error('Reconnection failed:', reconnectErr);
+            message.error('Failed to reconnect. Please refresh the page.');
+          }
+        }, 3000);
+      } else {
+        message.error('Failed to record join time');
+      }
+    }
+  };
+
+  // Handle reconnection
+  const handleReconnect = async (classData) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/reconnect`, {
+        classId: classData._id,
+        studentId: profile._id
+      });
+
+      setIsJoined(true);
+      message.success('Reconnected successfully');
+
+      // Open meeting in new tab with optimized Jitsi settings
+      const optimizedMeetingLink = `${classData.meetingLink}#config.prejoinPageEnabled=false&config.disableAudioLevels=true&config.maxFullResolutionParticipants=4&config.maxThumbnailResolution=180&config.resolution=720&config.constraints.video.width.ideal=1280&config.constraints.video.height.ideal=720&config.constraints.video.frameRate.ideal=15&config.constraints.video.frameRate.max=30&config.p2p.enabled=false&config.websocket=wss://meet.jit.si/xmpp-websocket&config.websocketKeepAlive=30&config.websocketKeepAliveUrl=https://meet.jit.si/ping&config.websocketKeepAliveInterval=30`;
+      
+      window.open(optimizedMeetingLink, '_blank');
+
+    } catch (err) {
+      console.error('Error reconnecting:', err);
+      throw err;
     }
   };
 
@@ -614,6 +742,11 @@ const StudentDashboard = () => {
         classId: classData._id,
         studentId: profile._id
       });
+
+      // Remove class ID from localStorage
+      const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
+      const updatedClasses = joinedClasses.filter(id => id !== classData._id);
+      localStorage.setItem('joinedClasses', JSON.stringify(updatedClasses));
 
       setIsJoined(false);
       message.info('Leave time recorded');
