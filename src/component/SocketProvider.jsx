@@ -74,13 +74,29 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  const joinForceLogout = (studentEmail) => {
+    if (socket && studentEmail) {
+      socket.emit('join-force-logout', studentEmail);
+      console.log('Joined force-logout room for:', studentEmail);
+    }
+  };
+
+  const leaveForceLogout = (studentEmail) => {
+    if (socket && studentEmail) {
+      socket.emit('leave-force-logout', studentEmail);
+      // console.log('Left force-logout room for:', studentEmail);
+    }
+  };
+
   const value = {
     socket,
     isConnected,
     joinNotifications,
     leaveNotifications,
     joinProfile,
-    leaveProfile
+    leaveProfile,
+    joinForceLogout,
+    leaveForceLogout
   };
 
   return (

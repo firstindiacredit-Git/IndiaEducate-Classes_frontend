@@ -43,6 +43,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [profile]);
 
+
+
   const login = async (userRole, emailOrPhone) => {
     // Prevent login as other role if already logged in
     const currentRole = localStorage.getItem('role');

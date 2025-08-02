@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './component/AuthProvider';
 import { CountriesProvider } from './component/CountriesApi';
 import { SocketProvider } from './component/SocketProvider';
+import ForceLogoutHandler from './component/ForceLogoutHandler';
 import Login from './pages/Student/Login';
 import Signup from './pages/Student/Signup';
 import AdminLogin from './pages/Admin/AdminLogin';
@@ -79,13 +80,14 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <CountriesProvider>
-          <SocketProvider>
+      <SocketProvider>
+        <AuthProvider>
+          <CountriesProvider>
+            <ForceLogoutHandler />
             <AppRoutes />
-          </SocketProvider>
-        </CountriesProvider>
-      </AuthProvider>
+          </CountriesProvider>
+        </AuthProvider>
+      </SocketProvider>
     </BrowserRouter>
   );
 };

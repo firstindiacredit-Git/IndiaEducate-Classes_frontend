@@ -12,7 +12,8 @@ import {
     BellOutlined,
     VideoCameraOutlined,
     ClockCircleOutlined,
-    WarningOutlined
+    WarningOutlined,
+    ExclamationCircleFilled
 } from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment';
@@ -265,8 +266,20 @@ const AdminNavbar = () => {
     };
 
     const handleLogout = () => {
-        logout();
-        navigate('/admin-login');
+        Modal.confirm({
+            title: 'Confirm Logout',
+            icon: <ExclamationCircleFilled />,
+            content: 'Are you sure you want to logout?',
+            okText: 'Yes, Logout',
+            cancelText: 'No, Cancel',
+            onOk() {
+                logout();
+                navigate('/admin-login');
+            },
+            onCancel() {
+                // Do nothing, just close the modal
+            },
+        });
     };
 
     const menu = (

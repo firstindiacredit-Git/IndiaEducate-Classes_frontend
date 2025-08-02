@@ -15,7 +15,8 @@ import {
     CheckCircleOutlined,
     ExclamationCircleOutlined,
     VideoCameraOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    ExclamationCircleFilled
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -194,8 +195,20 @@ const StudentNavbar = () => {
     }, [profile?.email]);
 
     const handleLogout = () => {
-        logout();
-        navigate('/');
+        Modal.confirm({
+            title: 'Confirm Logout',
+            icon: <ExclamationCircleFilled />,
+            content: 'Are you sure you want to logout?',
+            okText: 'Yes, Logout',
+            cancelText: 'No, Cancel',
+            onOk() {
+                logout();
+                navigate('/');
+            },
+            onCancel() {
+                // Do nothing, just close the modal
+            },
+        });
     };
 
     const handleRefreshProfile = async () => {
