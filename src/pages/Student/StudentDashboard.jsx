@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import { useSocket } from '../../component/SocketProvider';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import { formatTimeForStudent } from '../../utils/timezoneUtils';
 import {
@@ -404,6 +405,7 @@ const CustomCalendar = ({ classes, onDateClick }) => {
 const StudentDashboard = () => {
   const { profile } = useAuth();
   const { socket, isConnected } = useSocket();
+  const navigate = useNavigate();
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [activeClass, setActiveClass] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1008,13 +1010,36 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="STUDY MATERIALS">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button icon={<FilePdfOutlined />} block style={{ textAlign: 'left' }}>
-                      PDF documents
+                    <Button 
+                      icon={<FilePdfOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/file-library')}
+                    >
+                      File Library
                     </Button>
-                    <Button icon={<VideoCameraOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<FilePdfOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/file-library?tab=pdf')}
+                    >
+                      Pdf files
+                    </Button>
+                    <Button 
+                      icon={<VideoCameraOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/file-library?tab=video')}
+                    >
                       Video lessons
                     </Button>
-                    <Button icon={<AudioOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<AudioOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/file-library?tab=audio')}
+                    >
                       Audio files
                     </Button>
                   </Space>

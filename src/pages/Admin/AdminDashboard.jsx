@@ -14,6 +14,7 @@ import {
   WarningOutlined,
   TeamOutlined,
   ExclamationCircleOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -351,6 +352,22 @@ const AdminDashboard = () => {
                   color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
                 }}
                 suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
+              />
+            </Card>
+          </Col>
+
+          {/* File Upload Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/file-upload')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="File Management"
+                value="Upload & Manage"
+                prefix={<UploadOutlined style={{ color: '#722ed1' }} />}
+                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
               />
             </Card>
           </Col>

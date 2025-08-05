@@ -16,6 +16,8 @@ import ProtectedRoute from './component/ProtectedRoute';
 import CompletedSessions from './pages/Admin/CompletedSessions';
 import UpcomingSessions from './pages/Admin/UpcomingSessions';
 import ExpiredSessions from './pages/Admin/ExpiredSessions';
+import FileUpload from './pages/Admin/FileUpload';
+import FileLibrary from './pages/Student/FileLibrary';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -68,6 +70,16 @@ const AppRoutes = () => {
       <Route path="/completed-sessions" element={<ProtectedRoute><CompletedSessions /></ProtectedRoute>} />
       <Route path="/upcoming-sessions" element={<ProtectedRoute><UpcomingSessions /></ProtectedRoute>} />
       <Route path="/expired-sessions" element={<ProtectedRoute><ExpiredSessions /></ProtectedRoute>} />
+      <Route path="/file-upload" element={
+        <ProtectedRoute requiredRole="admin">
+          <FileUpload />
+        </ProtectedRoute>
+      } />
+      <Route path="/file-library" element={
+        <ProtectedRoute requiredRole="student">
+          <FileLibrary />
+        </ProtectedRoute>
+      } />
 
       {/* Catch all route */}
       <Route path="*" element={
