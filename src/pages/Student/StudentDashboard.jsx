@@ -1085,10 +1085,19 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="QUIZZES / ASSIGNMENTS">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<QuestionCircleOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/quiz-dashboard')}
+                    >
                       Take quizzes
                     </Button>
-                    <Button block style={{ textAlign: 'left' }}>
+                    <Button 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/quiz-dashboard')}
+                    >
                       Submit assignments
                     </Button>
                   </Space>

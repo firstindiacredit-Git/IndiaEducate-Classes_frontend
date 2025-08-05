@@ -18,6 +18,12 @@ import UpcomingSessions from './pages/Admin/UpcomingSessions';
 import ExpiredSessions from './pages/Admin/ExpiredSessions';
 import FileUpload from './pages/Admin/FileUpload';
 import FileLibrary from './pages/Student/FileLibrary';
+import QuizManagement from './pages/Admin/QuizManagement';
+import QuizSubmissions from './pages/Admin/QuizSubmissions';
+import QuizDashboard from './pages/Student/QuizDashboard';
+import TakeQuiz from './pages/Student/TakeQuiz';
+import QuizHistory from './pages/Student/QuizHistory';
+import QuizResult from './pages/Student/QuizResult';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -78,6 +84,36 @@ const AppRoutes = () => {
       <Route path="/file-library" element={
         <ProtectedRoute requiredRole="student">
           <FileLibrary />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-management" element={
+        <ProtectedRoute requiredRole="admin">
+          <QuizManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-submissions/:quizId" element={
+        <ProtectedRoute requiredRole="admin">
+          <QuizSubmissions />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-dashboard" element={
+        <ProtectedRoute requiredRole="student">
+          <QuizDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/take-quiz/:quizId" element={
+        <ProtectedRoute requiredRole="student">
+          <TakeQuiz />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-history" element={
+        <ProtectedRoute requiredRole="student">
+          <QuizHistory />
+        </ProtectedRoute>
+      } />
+      <Route path="/quiz-result/:submissionId" element={
+        <ProtectedRoute requiredRole="student">
+          <QuizResult />
         </ProtectedRoute>
       } />
 

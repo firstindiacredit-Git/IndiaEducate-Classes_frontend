@@ -372,6 +372,22 @@ const AdminDashboard = () => {
             </Card>
           </Col>
 
+          {/* Quiz Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/quiz-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="Quiz Management"
+                value="Create & Manage"
+                prefix={<BookOutlined style={{ color: '#13c2c2' }} />}
+                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
           {/* Connection Issues */}
           <Col xs={24} sm={12} lg={6}>
             <Card 
