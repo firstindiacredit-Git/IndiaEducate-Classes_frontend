@@ -1083,7 +1083,7 @@ const StudentDashboard = () => {
               </Col>
               {/* Quizzes Card */}
               <Col xs={24}>
-                <Card title="QUIZZES / ASSIGNMENTS">
+                <Card title="QUIZZES / SPEAKING ASSIGNMENTS">
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Button 
                       icon={<QuestionCircleOutlined />} 
@@ -1096,7 +1096,7 @@ const StudentDashboard = () => {
                     <Button 
                       block 
                       style={{ textAlign: 'left' }}
-                      onClick={() => navigate('/quiz-dashboard')}
+                      onClick={() => navigate('/assignment-dashboard')}
                     >
                       Submit assignments
                     </Button>

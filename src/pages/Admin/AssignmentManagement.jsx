@@ -19,7 +19,8 @@ import {
   Divider,
   Statistic,
   Progress,
-  Badge
+  Badge,
+  Switch
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -29,7 +30,9 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   UserOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  AudioOutlined,
+  VideoCameraOutlined
 } from '@ant-design/icons';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
@@ -42,7 +45,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const QuizManagement = () => {
+const AssignmentManagement = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   
@@ -51,50 +54,51 @@ const QuizManagement = () => {
     const now = moment();
     return {
       startDate: now,
-      endDate: now.add(7, 'days') // Quiz available for 7 days
+      endDate: now.add(7, 'days') // Assignment available for 7 days
     };
   };
-  const [quizzes, setQuizzes] = useState([]);
+  
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState(null);
+  const [editingAssignment, setEditingAssignment] = useState(null);
   const [form] = Form.useForm();
   const [stats, setStats] = useState({
-    totalQuizzes: 0,
-    activeQuizzes: 0,
-    publishedQuizzes: 0,
+    totalAssignments: 0,
+    activeAssignments: 0,
+    publishedAssignments: 0,
     totalSubmissions: 0
   });
 
-  // Fetch quizzes
-  const fetchQuizzes = async () => {
+  // Fetch assignments
+  const fetchAssignments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/all`);
-      setQuizzes(response.data);
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/all`);
+      setAssignments(response.data);
       
       // Calculate stats
-      const activeQuizzes = response.data.filter(q => q.isActive).length;
-      const publishedQuizzes = response.data.filter(q => q.isPublished).length;
+      const activeAssignments = response.data.filter(a => a.isActive).length;
+      const publishedAssignments = response.data.filter(a => a.isPublished).length;
       
       setStats({
-        totalQuizzes: response.data.length,
-        activeQuizzes,
-        publishedQuizzes,
+        totalAssignments: response.data.length,
+        activeAssignments,
+        publishedAssignments,
         totalSubmissions: 0 // Will be calculated separately
       });
     } catch (err) {
-      message.error('Failed to fetch quizzes');
+      message.error('Failed to fetch assignments');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchQuizzes();
+    fetchAssignments();
   }, []);
 
-  const handleCreateQuiz = async (values) => {
+  const handleCreateAssignment = async (values) => {
     try {
       setLoading(true);
       
@@ -105,77 +109,59 @@ const QuizManagement = () => {
         adminEmailOrPhone: localStorage.getItem('adminEmailOrPhone') || profile?.email
       };
 
-      if (editingQuiz) {
-        await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/${editingQuiz._id}`, payload);
-        message.success('Quiz updated successfully');
+      if (editingAssignment) {
+        await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/${editingAssignment._id}`, payload);
+        message.success('Assignment updated successfully');
       } else {
-        await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/create`, payload);
-        message.success('Quiz created successfully');
+        await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/create`, payload);
+        message.success('Assignment created successfully');
       }
 
       setModalVisible(false);
       form.resetFields();
-      setEditingQuiz(null);
-      fetchQuizzes();
+      setEditingAssignment(null);
+      fetchAssignments();
     } catch (err) {
-      message.error(err.response?.data?.message || 'Failed to save quiz');
+      message.error(err.response?.data?.message || 'Failed to save assignment');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (quiz) => {
-    setEditingQuiz(quiz);
+  const handleEdit = (assignment) => {
+    setEditingAssignment(assignment);
     form.setFieldsValue({
-      ...quiz,
-      startDate: moment(quiz.startDate),
-      endDate: moment(quiz.endDate),
-      assignedTo: quiz.assignedTo?.map(s => s._id) || []
+      ...assignment,
+      startDate: moment(assignment.startDate),
+      endDate: moment(assignment.endDate),
+      assignedTo: assignment.assignedTo?.map(s => s._id) || []
     });
     setModalVisible(true);
   };
 
-  const handleDelete = async (quizId) => {
+  const handleDelete = async (assignmentId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/${quizId}`, {
+      await axios.delete(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/${assignmentId}`, {
         data: { adminEmailOrPhone: localStorage.getItem('adminEmailOrPhone') || profile?.email }
       });
-      message.success('Quiz deleted successfully');
-      fetchQuizzes();
+      message.success('Assignment deleted successfully');
+      fetchAssignments();
     } catch (err) {
-      message.error(err.response?.data?.message || 'Failed to delete quiz');
+      message.error(err.response?.data?.message || 'Failed to delete assignment');
     }
   };
 
-    const handlePublish = async (quizId, isPublished) => {
+  const handlePublish = async (assignmentId, isPublished) => {
     try {
       const adminEmailOrPhone = localStorage.getItem('adminEmailOrPhone') || profile?.email;
-      await axios.patch(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/${quizId}/publish`, {
+      await axios.patch(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/${assignmentId}/publish`, {
         isPublished,
         adminEmailOrPhone
       });
-      message.success(`Quiz ${isPublished ? 'published' : 'unpublished'} successfully`);
-      fetchQuizzes();
+      message.success(`Assignment ${isPublished ? 'published' : 'unpublished'} successfully`);
+      fetchAssignments();
     } catch (err) {
-      message.error('Failed to update quiz status');
-    }
-  };
-
-  const handleMakeAvailable = async (quizId) => {
-    try {
-      const adminEmailOrPhone = localStorage.getItem('adminEmailOrPhone') || profile?.email;
-      const now = new Date();
-      const endDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
-      
-      await axios.put(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/${quizId}`, {
-        startDate: now.toISOString(),
-        endDate: endDate.toISOString(),
-        adminEmailOrPhone
-      });
-      message.success('Quiz is now available for students');
-      fetchQuizzes();
-    } catch (err) {
-      message.error('Failed to make quiz available');
+      message.error('Failed to update assignment status');
     }
   };
 
@@ -191,13 +177,12 @@ const QuizManagement = () => {
     return colors[subject] || 'default';
   };
 
+  const getTypeIcon = (type) => {
+    return type === 'audio' ? <AudioOutlined /> : <VideoCameraOutlined />;
+  };
+
   const getTypeColor = (type) => {
-    const colors = {
-      weekly_test: 'red',
-      assignment: 'blue',
-      practice_quiz: 'green'
-    };
-    return colors[type] || 'default';
+    return type === 'audio' ? 'green' : 'blue';
   };
 
   const columns = [
@@ -219,8 +204,8 @@ const QuizManagement = () => {
       dataIndex: 'type',
       key: 'type',
       render: (type) => (
-        <Tag color={getTypeColor(type)}>
-          {type.replace('_', ' ').toUpperCase()}
+        <Tag color={getTypeColor(type)} icon={getTypeIcon(type)}>
+          {type.toUpperCase()}
         </Tag>
       )
     },
@@ -306,20 +291,12 @@ const QuizManagement = () => {
             type="default"
             size="small"
             icon={<EyeOutlined />}
-            onClick={() => navigate(`/quiz-submissions/${record._id}`)}
+            onClick={() => navigate(`/assignment-submissions/${record._id}`)}
           >
             Submissions
           </Button>
-          <Button 
-            type="default"
-            size="small"
-            onClick={() => handleMakeAvailable(record._id)}
-            style={{ marginLeft: 8 }}
-          >
-            Make Available
-          </Button>
           <Popconfirm
-            title="Are you sure you want to delete this quiz?"
+            title="Are you sure you want to delete this assignment?"
             onConfirm={() => handleDelete(record._id)}
             okText="Yes"
             cancelText="No"
@@ -344,7 +321,7 @@ const QuizManagement = () => {
       
       <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-        <Space align="center">
+          <Space align="center">
             <Button
               type="link"
               icon={<ArrowLeftOutlined />}
@@ -355,18 +332,18 @@ const QuizManagement = () => {
                 padding: 0
               }}
             />
-            <Title level={2} style={{ margin: 0 }}>Quiz Management</Title>
+            <Title level={2} style={{ margin: 0 }}>Assignment Management</Title>
           </Space>
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
             onClick={() => {
-              setEditingQuiz(null);
+              setEditingAssignment(null);
               form.resetFields();
               setModalVisible(true);
             }}
           >
-            Create Quiz
+            Create Assignment
           </Button>
         </Row>
 
@@ -375,8 +352,8 @@ const QuizManagement = () => {
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
-                title="Total Quizzes"
-                value={stats.totalQuizzes}
+                title="Total Assignments"
+                value={stats.totalAssignments}
                 prefix={<TrophyOutlined />}
                 valueStyle={{ color: '#1890ff' }}
               />
@@ -385,8 +362,8 @@ const QuizManagement = () => {
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
-                title="Active Quizzes"
-                value={stats.activeQuizzes}
+                title="Active Assignments"
+                value={stats.activeAssignments}
                 prefix={<CheckCircleOutlined />}
                 valueStyle={{ color: '#52c41a' }}
               />
@@ -395,8 +372,8 @@ const QuizManagement = () => {
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
-                title="Published Quizzes"
-                value={stats.publishedQuizzes}
+                title="Published Assignments"
+                value={stats.publishedAssignments}
                 prefix={<ClockCircleOutlined />}
                 valueStyle={{ color: '#faad14' }}
               />
@@ -414,11 +391,11 @@ const QuizManagement = () => {
           </Col>
         </Row>
 
-        {/* Quizzes Table */}
-        <Card title="All Quizzes" loading={loading}>
+        {/* Assignments Table */}
+        <Card title="All Assignments" loading={loading}>
           <Table
             columns={columns}
-            dataSource={quizzes}
+            dataSource={assignments}
             rowKey="_id"
             pagination={{
               pageSize: 10,
@@ -428,13 +405,13 @@ const QuizManagement = () => {
           />
         </Card>
 
-        {/* Create/Edit Quiz Modal */}
+        {/* Create/Edit Assignment Modal */}
         <Modal
-          title={editingQuiz ? 'Edit Quiz' : 'Create New Quiz'}
+          title={editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
           open={modalVisible}
           onCancel={() => {
             setModalVisible(false);
-            setEditingQuiz(null);
+            setEditingAssignment(null);
             form.resetFields();
           }}
           footer={null}
@@ -443,14 +420,21 @@ const QuizManagement = () => {
           <Form
             form={form}
             layout="vertical"
-            onFinish={handleCreateQuiz}
+            onFinish={handleCreateAssignment}
             initialValues={{
-              type: 'weekly_test',
+              type: 'audio',
               subject: 'english',
               language: 'english',
-              duration: 30,
+              duration: 5,
+              maxFileSize: 100,
               totalMarks: 100,
               passingMarks: 40,
+              rubric: {
+                pronunciation: 25,
+                fluency: 25,
+                clarity: 25,
+                expression: 25
+              },
               ...getDefaultDates()
             }}
           >
@@ -458,22 +442,21 @@ const QuizManagement = () => {
               <Col span={12}>
                 <Form.Item
                   name="title"
-                  label="Quiz Title"
-                  rules={[{ required: true, message: 'Please enter quiz title' }]}
+                  label="Assignment Title"
+                  rules={[{ required: true, message: 'Please enter assignment title' }]}
                 >
-                  <Input placeholder="Enter quiz title" />
+                  <Input placeholder="Enter assignment title" />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="type"
-                  label="Quiz Type"
-                  rules={[{ required: true, message: 'Please select quiz type' }]}
+                  label="Assignment Type"
+                  rules={[{ required: true, message: 'Please select assignment type' }]}
                 >
                   <Select>
-                    <Option value="weekly_test">Weekly Test</Option>
-                    <Option value="assignment">Assignment</Option>
-                    <Option value="practice_quiz">Practice Quiz</Option>
+                    <Option value="audio">Audio Recording</Option>
+                    <Option value="video">Video Recording</Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -484,7 +467,15 @@ const QuizManagement = () => {
               label="Description"
               rules={[{ required: true, message: 'Please enter description' }]}
             >
-              <TextArea rows={3} placeholder="Enter quiz description" />
+              <TextArea rows={3} placeholder="Enter assignment description" />
+            </Form.Item>
+
+            <Form.Item
+              name="paragraph"
+              label="Paragraph to Read"
+              rules={[{ required: true, message: 'Please enter paragraph for students to read' }]}
+            >
+              <TextArea rows={6} placeholder="Enter the paragraph that students need to read and record..." />
             </Form.Item>
 
             <Row gutter={16}>
@@ -523,12 +514,21 @@ const QuizManagement = () => {
                   label="Duration (minutes)"
                   rules={[{ required: true, message: 'Please enter duration' }]}
                 >
-                  <InputNumber min={5} max={180} style={{ width: '100%' }} />
+                  <InputNumber min={1} max={60} style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
+              <Col span={8}>
+                <Form.Item
+                  name="maxFileSize"
+                  label="Max File Size (MB)"
+                  rules={[{ required: true, message: 'Please enter max file size' }]}
+                >
+                  <InputNumber min={1} max={500} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
               <Col span={8}>
                 <Form.Item
                   name="totalMarks"
@@ -545,14 +545,6 @@ const QuizManagement = () => {
                   rules={[{ required: true, message: 'Please enter passing marks' }]}
                 >
                   <InputNumber min={1} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="weekNumber"
-                  label="Week Number (for weekly tests)"
-                >
-                  <InputNumber min={1} max={52} style={{ width: '100%' }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -578,99 +570,62 @@ const QuizManagement = () => {
               </Col>
             </Row>
 
-            <Divider>Questions</Divider>
+            <Form.Item
+              name="instructions"
+              label="Instructions (Optional)"
+            >
+              <TextArea rows={3} placeholder="Enter additional instructions for students..." />
+            </Form.Item>
+
+            <Divider>Evaluation Rubric</Divider>
             
-            <Form.List name="questions">
-              {(fields, { add, remove }) => (
-                <>
-                  {fields.map(({ key, name, ...restField }) => (
-                    <Card key={key} size="small" style={{ marginBottom: 16 }}>
-                      <Row gutter={16}>
-                        <Col span={24}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'question']}
-                            label="Question"
-                            rules={[{ required: true, message: 'Please enter question' }]}
-                          >
-                            <TextArea rows={2} placeholder="Enter question" />
-                          </Form.Item>
-                        </Col>
-                      </Row>
-
-                      <Row gutter={16}>
-                        <Col span={8}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'type']}
-                            label="Question Type"
-                            rules={[{ required: true, message: 'Please select type' }]}
-                          >
-                            <Select>
-                              <Option value="multiple_choice">Multiple Choice</Option>
-                              <Option value="true_false">True/False</Option>
-                              <Option value="fill_blank">Fill in the Blank</Option>
-                              <Option value="short_answer">Short Answer</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'marks']}
-                            label="Marks"
-                            rules={[{ required: true, message: 'Please enter marks' }]}
-                          >
-                            <InputNumber min={1} style={{ width: '100%' }} />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Button 
-                            type="text" 
-                            danger 
-                            onClick={() => remove(name)}
-                            style={{ marginTop: 32 }}
-                          >
-                            Remove Question
-                          </Button>
-                        </Col>
-                      </Row>
-
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'correctAnswer']}
-                        label="Correct Answer"
-                        rules={[{ required: true, message: 'Please enter correct answer' }]}
-                      >
-                        <Input placeholder="Enter correct answer" />
-                      </Form.Item>
-
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'options']}
-                        label="Options (for multiple choice)"
-                      >
-                        <Select mode="tags" placeholder="Enter options" />
-                      </Form.Item>
-                    </Card>
-                  ))}
-                  <Form.Item>
-                    <Button type="dashed" onClick={() => add()} block>
-                      Add Question
-                    </Button>
-                  </Form.Item>
-                </>
-              )}
-            </Form.List>
+            <Row gutter={16}>
+              <Col span={6}>
+                <Form.Item
+                  name={['rubric', 'pronunciation']}
+                  label="Pronunciation (25)"
+                  rules={[{ required: true, message: 'Please enter pronunciation marks' }]}
+                >
+                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item
+                  name={['rubric', 'fluency']}
+                  label="Fluency (25)"
+                  rules={[{ required: true, message: 'Please enter fluency marks' }]}
+                >
+                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item
+                  name={['rubric', 'clarity']}
+                  label="Clarity (25)"
+                  rules={[{ required: true, message: 'Please enter clarity marks' }]}
+                >
+                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item
+                  name={['rubric', 'expression']}
+                  label="Expression (25)"
+                  rules={[{ required: true, message: 'Please enter expression marks' }]}
+                >
+                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Form.Item>
               <Space>
                 <Button type="primary" htmlType="submit" loading={loading}>
-                  {editingQuiz ? 'Update Quiz' : 'Create Quiz'}
+                  {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
                 </Button>
                 <Button onClick={() => {
                   setModalVisible(false);
-                  setEditingQuiz(null);
+                  setEditingAssignment(null);
                   form.resetFields();
                 }}>
                   Cancel
@@ -684,4 +639,4 @@ const QuizManagement = () => {
   );
 };
 
-export default QuizManagement; 
+export default AssignmentManagement; 

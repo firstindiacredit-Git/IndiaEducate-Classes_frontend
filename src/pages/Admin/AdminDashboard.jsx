@@ -388,6 +388,22 @@ const AdminDashboard = () => {
             </Card>
           </Col>
 
+          {/* Assignment Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/assignment-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="Assignment Management"
+                value="Speaking Tasks"
+                prefix={<VideoCameraOutlined style={{ color: '#722ed1' }} />}
+                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
           {/* Connection Issues */}
           <Col xs={24} sm={12} lg={6}>
             <Card 
