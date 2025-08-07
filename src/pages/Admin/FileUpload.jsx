@@ -166,6 +166,7 @@ const FileUpload = () => {
       formData.append('category', values.category);
       formData.append('description', values.description || '');
       formData.append('tags', values.tags || '');
+      formData.append('isPublic', values.isPublic || true);
 
       let endpoint = '';
       switch (uploadType) {
@@ -199,6 +200,12 @@ const FileUpload = () => {
       );
 
       message.success('File uploaded successfully!');
+      
+      // Show notification about students being notified if file is public
+      if (values.isPublic !== false) {
+        message.info('Students have been notified about the new study material.');
+      }
+      
       setUploadModalVisible(false);
       form.resetFields();
       setFileList([]);

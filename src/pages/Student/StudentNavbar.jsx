@@ -16,7 +16,11 @@ import {
     ExclamationCircleOutlined,
     VideoCameraOutlined,
     ReloadOutlined,
-    ExclamationCircleFilled
+    ExclamationCircleFilled,
+    FileTextOutlined,
+    FormOutlined,
+    BarChartOutlined,
+    BookOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -264,6 +268,18 @@ const StudentNavbar = () => {
                 return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
             case 'class_started':
                 return <VideoCameraOutlined style={{ color: '#ff6b35' }} />;
+            case 'study_material_uploaded':
+                return <FileTextOutlined style={{ color: '#722ed1' }} />;
+            case 'quiz_created':
+                return <FormOutlined style={{ color: '#13c2c2' }} />;
+            case 'weekly_test_created':
+                return <BarChartOutlined style={{ color: '#eb2f96' }} />;
+            case 'assignment_created':
+                return <BookOutlined style={{ color: '#fa8c16' }} />;
+            case 'assignment_reviewed':
+                return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+            case 'quiz_reviewed':
+                return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
             default:
                 return <BellOutlined style={{ color: '#666' }} />;
         }

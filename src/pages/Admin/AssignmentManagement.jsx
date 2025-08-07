@@ -115,6 +115,7 @@ const AssignmentManagement = () => {
       } else {
         await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/assignments/create`, payload);
         message.success('Assignment created successfully');
+        message.info('Students have been notified about the new assignment.');
       }
 
       setModalVisible(false);

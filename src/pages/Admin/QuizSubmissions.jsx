@@ -92,6 +92,7 @@ const QuizSubmissions = () => {
       });
       
       message.success('Review submitted successfully');
+      message.info('Student has been notified about the review.');
       setReviewModalVisible(false);
       fetchData(); // Refresh data
     } catch (err) {

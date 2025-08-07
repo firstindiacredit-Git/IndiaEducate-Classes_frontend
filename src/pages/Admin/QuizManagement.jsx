@@ -111,6 +111,7 @@ const QuizManagement = () => {
       } else {
         await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/quizzes/create`, payload);
         message.success('Quiz created successfully');
+        message.info('Students have been notified about the new quiz.');
       }
 
       setModalVisible(false);
