@@ -30,6 +30,7 @@ import AssignmentDashboard from './pages/Student/AssignmentDashboard';
 import SubmitAssignment from './pages/Student/SubmitAssignment';
 import AssignmentHistory from './pages/Student/AssignmentHistory';
 import AssignmentSubmissionDetails from './pages/Student/AssignmentSubmissionDetails';
+import ProgressTracking from './pages/Student/ProgressTracking';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -150,6 +151,11 @@ const AppRoutes = () => {
       <Route path="/assignment-submission-details/:submissionId" element={
         <ProtectedRoute requiredRole="student">
           <AssignmentSubmissionDetails />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress-tracking" element={
+        <ProtectedRoute requiredRole="student">
+          <ProgressTracking />
         </ProtectedRoute>
       } />
 

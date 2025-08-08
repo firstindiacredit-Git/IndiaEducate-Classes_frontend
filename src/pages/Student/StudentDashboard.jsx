@@ -423,6 +423,8 @@ const StudentDashboard = () => {
   const [assignmentsModalVisible, setAssignmentsModalVisible] = useState(false);
   const [quizzesModalVisible, setQuizzesModalVisible] = useState(false);
   const [liveClassesModalVisible, setLiveClassesModalVisible] = useState(false);
+  const [progressTrackingModalVisible, setProgressTrackingModalVisible] = useState(false);
+  const [detailedProgressData, setDetailedProgressData] = useState(null);
   const firstName = profile?.fullName?.split(' ')[0] || 'Student';
 
   // Fetch upcoming classes
@@ -458,7 +460,7 @@ const StudentDashboard = () => {
 
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/attendance/student/${profile._id}`);
       setStudentAttendance(response.data);
-      
+
       // Log attendance data for debugging
       // console.log('Student attendance data:', response.data);
     } catch (err) {
@@ -494,10 +496,16 @@ const StudentDashboard = () => {
     try {
       setProgressLoading(true);
       const emailOrPhone = localStorage.getItem('studentEmailOrPhone');
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/student/assignments/progress`, {
-        params: { studentEmailOrPhone: emailOrPhone }
-      });
-      setProgressData(response.data);
+      const [progressResponse, detailedResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/student/assignments/progress`, {
+          params: { studentEmailOrPhone: emailOrPhone }
+        }),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/api/student/assignments/detailed-progress`, {
+          params: { studentEmailOrPhone: emailOrPhone }
+        })
+      ]);
+      setProgressData(progressResponse.data);
+      setDetailedProgressData(detailedResponse.data);
     } catch (err) {
       console.error('Error fetching progress data:', err);
       message.error('Failed to load progress data');
@@ -531,16 +539,16 @@ const StudentDashboard = () => {
     const checkForActiveSessions = async () => {
       try {
         const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
-        
+
         if (joinedClasses.length > 0) {
           // Check if any of these classes are still ongoing
-          const ongoingClasses = allClasses.filter(cls => 
+          const ongoingClasses = allClasses.filter(cls =>
             cls.status === 'ongoing' && joinedClasses.includes(cls._id)
           );
 
           if (ongoingClasses.length > 0) {
             message.info('Detected active class session. Attempting to restore connection...');
-            
+
             // For each ongoing class, try to reconnect
             for (const classData of ongoingClasses) {
               try {
@@ -571,7 +579,7 @@ const StudentDashboard = () => {
       if (document.visibilityState === 'visible') {
         // Page became visible again, check if we need to reconnect
         const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
-        const ongoingClasses = allClasses.filter(cls => 
+        const ongoingClasses = allClasses.filter(cls =>
           cls.status === 'ongoing' && joinedClasses.includes(cls._id)
         );
 
@@ -594,7 +602,7 @@ const StudentDashboard = () => {
       // Listen for class status changes
       socket.on('class-status-changed', (data) => {
         // console.log('Received class status change:', data);
-        
+
         // Update active class if it's the same class
         if (activeClass && activeClass._id === data.classId) {
           if (data.status === 'completed') {
@@ -604,7 +612,7 @@ const StudentDashboard = () => {
             setActiveClass(prev => ({ ...prev, status: data.status, ...data.updates }));
           }
         }
-        
+
         // Refresh classes data
         fetchClasses();
         fetchAllClasses();
@@ -698,7 +706,7 @@ const StudentDashboard = () => {
       // Check if we already joined this class (stored in localStorage)
       const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
       const isReconnect = joinedClasses.includes(classData._id);
-      
+
       // Record join time or handle reconnection
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
         classId: classData._id,
@@ -713,7 +721,7 @@ const StudentDashboard = () => {
       }
 
       setIsJoined(true);
-      
+
       if (isReconnect) {
         message.success('Reconnected to class successfully');
       } else {
@@ -722,7 +730,7 @@ const StudentDashboard = () => {
 
       // Open meeting in new tab with optimized Jitsi settings
       const optimizedMeetingLink = `${classData.meetingLink}#config.prejoinPageEnabled=false&config.disableAudioLevels=true&config.maxFullResolutionParticipants=4&config.maxThumbnailResolution=180&config.resolution=720&config.constraints.video.width.ideal=1280&config.constraints.video.height.ideal=720&config.constraints.video.frameRate.ideal=15&config.constraints.video.frameRate.max=30&config.p2p.enabled=false&config.websocket=wss://meet.jit.si/xmpp-websocket&config.websocketKeepAlive=30&config.websocketKeepAliveUrl=https://meet.jit.si/ping&config.websocketKeepAliveInterval=30`;
-      
+
       const meetingWindow = window.open(optimizedMeetingLink, '_blank');
 
       // Set up leave tracking when user closes tab
@@ -742,11 +750,11 @@ const StudentDashboard = () => {
 
     } catch (err) {
       console.error('Error joining class:', err);
-      
+
       // If it's a network error or browser crash, try reconnection
       if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
         message.warning('Connection lost. Attempting to reconnect...');
-        
+
         // Try reconnection after 3 seconds
         setTimeout(async () => {
           try {
@@ -775,7 +783,7 @@ const StudentDashboard = () => {
 
       // Open meeting in new tab with optimized Jitsi settings
       const optimizedMeetingLink = `${classData.meetingLink}#config.prejoinPageEnabled=false&config.disableAudioLevels=true&config.maxFullResolutionParticipants=4&config.maxThumbnailResolution=180&config.resolution=720&config.constraints.video.width.ideal=1280&config.constraints.video.height.ideal=720&config.constraints.video.frameRate.ideal=15&config.constraints.video.frameRate.max=30&config.p2p.enabled=false&config.websocket=wss://meet.jit.si/xmpp-websocket&config.websocketKeepAlive=30&config.websocketKeepAliveUrl=https://meet.jit.si/ping&config.websocketKeepAliveInterval=30`;
-      
+
       window.open(optimizedMeetingLink, '_blank');
 
     } catch (err) {
@@ -851,176 +859,85 @@ const StudentDashboard = () => {
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
       <div style={{ padding: '24px 40px' }}>
-        <Title level={2}>Welcome, {firstName}</Title>
-        <Text>Enrolled in: {profile?.program} Program</Text>
-
-        {/* Overall Progress Tracking */}
-        <Card 
-          title="Course Progress" 
-          loading={progressLoading}
-          style={{ marginTop: 20, marginBottom: 24 }}
-          extra={
-            <Button 
-              type="link" 
-              icon={<ReloadOutlined />} 
-              onClick={fetchProgressData}
-              loading={progressLoading}
-            >
-              Refresh
-            </Button>
-          }
-        >
-          {progressData ? (
-            <div>
-              {/* Overall Progress */}
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text strong>Overall Course Progress</Text>
-                  <Text type="secondary">
-                    {progressData.overall?.completedActivities || 0} of {progressData.overall?.totalActivities || 0} activities completed
+        <Title level={2}>
+          Welcome, {firstName}
+          {detailedProgressData?.badges && detailedProgressData.badges.length > 0 && (
+            <>
+              {' '}
+              {/* Show only first badge */}
+              <Tooltip title={detailedProgressData.badges[0].description}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 8px',
+                  backgroundColor: `${detailedProgressData.badges[0].color}15`,
+                  border: `1px solid ${detailedProgressData.badges[0].color}`,
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  marginLeft: '8px'
+                }}>
+                  <span style={{ marginRight: '4px', fontSize: '16px' }}>
+                    {detailedProgressData.badges[0].icon}
+                  </span>
+                  <Text style={{ fontSize: '11px', color: detailedProgressData.badges[0].color }}>
+                    {detailedProgressData.badges[0].name}
                   </Text>
                 </div>
-                <Progress
-                  percent={progressData.overall?.progressPercentage || 0}
-                  status={(progressData.overall?.progressPercentage || 0) >= 80 ? 'success' : 
-                         (progressData.overall?.progressPercentage || 0) >= 50 ? 'active' : 'exception'}
-                  strokeWidth={12}
-                  format={percent => `${percent}%`}
-                />
-                <div style={{ marginTop: 8 }}>
-                  <Text type="secondary">
-                    {progressData.overall?.remainingActivities || 0} activities remaining
+              </Tooltip>
+              
+              {/* Show "+X more" if there are additional badges */}
+              {detailedProgressData.badges.length > 1 && (
+                <Tooltip title="Click to view all badges">
+                  <Text 
+                    type="secondary" 
+                    style={{ 
+                      fontSize: '11px', 
+                      marginLeft: '8px',
+                      cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                    onClick={() => navigate('/progress-tracking')}
+                  >
+                    +{detailedProgressData.badges.length - 1} more
                   </Text>
-                </div>
-              </div>
-
-              {/* Breakdown by Category */}
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={8}>
-                  <Card 
-                    size="small" 
-                    style={{ textAlign: 'center', cursor: 'pointer' }}
-                    onClick={() => setAssignmentsModalVisible(true)}
-                    hoverable
-                  >
-                    <div style={{ marginBottom: 8 }}>
-                      <TrophyOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
-                    </div>
-                    <Text strong>Assignments</Text>
-                    <div style={{ marginTop: 8 }}>
-                      <Progress
-                        percent={progressData.breakdown?.assignments?.percentage || 0}
-                        size="small"
-                        status={(progressData.breakdown?.assignments?.percentage || 0) >= 80 ? 'success' : 'active'}
-                      />
-                    </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {progressData.breakdown?.assignments?.completed || 0}/{progressData.breakdown?.assignments?.total || 0} completed
-                    </Text>
-                  </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Card 
-                    size="small" 
-                    style={{ textAlign: 'center', cursor: 'pointer' }}
-                    onClick={() => setQuizzesModalVisible(true)}
-                    hoverable
-                  >
-                    <div style={{ marginBottom: 8 }}>
-                      <QuestionCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
-                    </div>
-                    <Text strong>Quizzes</Text>
-                    <div style={{ marginTop: 8 }}>
-                      <Progress
-                        percent={progressData.breakdown?.quizzes?.percentage || 0}
-                        size="small"
-                        status={(progressData.breakdown?.quizzes?.percentage || 0) >= 80 ? 'success' : 'active'}
-                      />
-                    </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {progressData.breakdown?.quizzes?.completed || 0}/{progressData.breakdown?.quizzes?.total || 0} completed
-                    </Text>
-                  </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Card 
-                    size="small" 
-                    style={{ textAlign: 'center', cursor: 'pointer' }}
-                    onClick={() => setLiveClassesModalVisible(true)}
-                    hoverable
-                  >
-                    <div style={{ marginBottom: 8 }}>
-                      <VideoCameraOutlined style={{ fontSize: '24px', color: '#faad14' }} />
-                    </div>
-                    <Text strong>Live Classes</Text>
-                    <div style={{ marginTop: 8 }}>
-                      <Progress
-                        percent={studentAttendance?.stats?.attendancePercentage || 0}
-                        size="small"
-                        status={studentAttendance?.stats?.attendancePercentage >= 80 ? 'success' : 'active'}
-                      />
-                    </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {studentAttendance?.stats?.present || 0}/{studentAttendance?.stats?.totalClasses || 0} attended
-                    </Text>
-                  </Card>
-                </Col>
-              </Row>
-
-    
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <Text type="secondary">Loading progress data...</Text>
-            </div>
+                </Tooltip>
+              )}
+            </>
           )}
-        </Card>
+        </Title>
+        {progressData ? (
+          <div>
+            {/* Overall Progress */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text strong>Enrolled in: {profile?.program} Program</Text>
+                <Text type="secondary">
+                  {progressData.overall?.completedActivities || 0} of {progressData.overall?.totalActivities || 0} activities completed
+                </Text>
+              </div>
+              <Progress
+                percent={progressData.overall?.progressPercentage || 0}
+                status={(progressData.overall?.progressPercentage || 0) >= 80 ? 'success' :
+                  (progressData.overall?.progressPercentage || 0) >= 50 ? 'active' : 'exception'}
+                strokeWidth={12}
+                format={percent => `${percent}%`}
+              />
+              <div style={{ marginTop: 8 }}>
+                <Text type="secondary">
+                  {progressData.overall?.remainingActivities || 0} activities remaining
+                </Text>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <Text type="secondary">Loading progress data...</Text>
+          </div>
+        )}
 
-        {/* Quick Actions */}
-        {/* <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-          <Col xs={24} sm={8}>
-            <Card 
-              size="small" 
-              style={{ textAlign: 'center', cursor: 'pointer' }}
-              onClick={() => navigate('/assignment-dashboard')}
-              hoverable
-            >
-              <TrophyOutlined style={{ fontSize: '32px', color: '#1890ff', marginBottom: '8px' }} />
-              <div><Text strong>Assignments</Text></div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {progressData?.assignments?.total || 0} available
-              </Text>
-            </Card>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Card 
-              size="small" 
-              style={{ textAlign: 'center', cursor: 'pointer' }}
-              onClick={() => navigate('/quiz-dashboard')}
-              hoverable
-            >
-              <QuestionCircleOutlined style={{ fontSize: '32px', color: '#52c41a', marginBottom: '8px' }} />
-              <div><Text strong>Quizzes</Text></div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {progressData?.quizzes?.total || 0} available
-              </Text>
-            </Card>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Card 
-              size="small" 
-              style={{ textAlign: 'center', cursor: 'pointer' }}
-              onClick={() => setAllClassesModalVisible(true)}
-              hoverable
-            >
-              <VideoCameraOutlined style={{ fontSize: '32px', color: '#faad14', marginBottom: '8px' }} />
-              <div><Text strong>Live Classes</Text></div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {upcomingClasses.length} upcoming
-              </Text>
-            </Card>
-          </Col>
-        </Row> */}
+
+
+
 
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
           {/* Left Side */}
@@ -1190,33 +1107,33 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="STUDY MATERIALS">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button 
-                      icon={<FilePdfOutlined />} 
-                      block 
+                    <Button
+                      icon={<FilePdfOutlined />}
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/file-library')}
                     >
                       File Library
                     </Button>
-                    <Button 
-                      icon={<FilePdfOutlined />} 
-                      block 
+                    <Button
+                      icon={<FilePdfOutlined />}
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/file-library?tab=pdf')}
                     >
                       Pdf files
                     </Button>
-                    <Button 
-                      icon={<VideoCameraOutlined />} 
-                      block 
+                    <Button
+                      icon={<VideoCameraOutlined />}
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/file-library?tab=video')}
                     >
                       Video lessons
                     </Button>
-                    <Button 
-                      icon={<AudioOutlined />} 
-                      block 
+                    <Button
+                      icon={<AudioOutlined />}
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/file-library?tab=audio')}
                     >
@@ -1232,10 +1149,54 @@ const StudentDashboard = () => {
                     <Button icon={<TrophyOutlined />} block style={{ textAlign: 'left' }}>
                       View certificates
                     </Button>
-                    <Button icon={<LineChartOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button
+                      icon={<LineChartOutlined />}
+                      block
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/progress-tracking')}
+                    >
                       Track progress
                     </Button>
                   </Space>
+
+                  {/* Recent Badges */}
+                  {detailedProgressData?.badges && detailedProgressData.badges.length > 0 && (
+                    <>
+                      <Divider />
+                      <div>
+                        <Text strong style={{ fontSize: '14px', marginBottom: '8px', display: 'block' }}>
+                          Recent Achievements
+                        </Text>
+                        <Space wrap>
+                          {detailedProgressData.badges.slice(0, 3).map((badge) => (
+                            <Tooltip key={badge.id} title={badge.description}>
+                              <div style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '4px 8px',
+                                backgroundColor: `${badge.color}15`,
+                                border: `1px solid ${badge.color}`,
+                                borderRadius: '12px',
+                                fontSize: '12px'
+                              }}>
+                                <span style={{ marginRight: '4px', fontSize: '16px' }}>
+                                  {badge.icon}
+                                </span>
+                                <Text style={{ fontSize: '11px', color: badge.color }}>
+                                  {badge.name}
+                                </Text>
+                              </div>
+                            </Tooltip>
+                          ))}
+                          {detailedProgressData.badges.length > 3 && (
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                              +{detailedProgressData.badges.length - 3} more
+                            </Text>
+                          )}
+                        </Space>
+                      </div>
+                    </>
+                  )}
                 </Card>
               </Col>
 
@@ -1265,16 +1226,16 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="QUIZZES / SPEAKING ASSIGNMENTS">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button 
-                      icon={<QuestionCircleOutlined />} 
-                      block 
+                    <Button
+                      icon={<QuestionCircleOutlined />}
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/quiz-dashboard')}
                     >
                       Take quizzes
                     </Button>
-                    <Button 
-                      block 
+                    <Button
+                      block
                       style={{ textAlign: 'left' }}
                       onClick={() => navigate('/assignment-dashboard')}
                     >
@@ -1484,8 +1445,8 @@ const StudentDashboard = () => {
                         )}
                         <br />
                         <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                          {record.duration > 0 ? 
-                            `${Math.round((record.duration / (record.classId?.duration || 1)) * 100)}% attended` : 
+                          {record.duration > 0 ?
+                            `${Math.round((record.duration / (record.classId?.duration || 1)) * 100)}% attended` :
                             'No attendance'
                           }
                         </Text>
@@ -1653,299 +1614,7 @@ const StudentDashboard = () => {
           )}
         </Modal>
 
-        {/* Assignments Detailed Modal */}
-        <Modal
-          title={
-            <Space>
-              <TrophyOutlined style={{ color: '#1890ff' }} />
-              <span>Assignments Details</span>
-            </Space>
-          }
-          open={assignmentsModalVisible}
-          onCancel={() => setAssignmentsModalVisible(false)}
-          footer={null}
-          width={800}
-        >
-          {progressData?.assignments ? (
-            <div>
-              {/* Overall Progress */}
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text strong>Overall Assignment Progress</Text>
-                  <Text type="secondary">
-                    {progressData.assignments.completed || 0} of {progressData.assignments.total || 0} assignments completed
-                  </Text>
-                </div>
-                <Progress
-                  percent={progressData.breakdown?.assignments?.percentage || 0}
-                  status={(progressData.breakdown?.assignments?.percentage || 0) >= 80 ? 'success' : 
-                         (progressData.breakdown?.assignments?.percentage || 0) >= 50 ? 'active' : 'exception'}
-                  strokeWidth={12}
-                  format={percent => `${percent}%`}
-                />
-              </div>
 
-              {/* Detailed Statistics */}
-              <Row gutter={[16, 16]}>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#f6ffed' }}>
-                    <Text strong style={{ color: '#52c41a' }}>{progressData.assignments.completed || 0}</Text>
-                    <br />
-                    <Text type="secondary">Completed</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff7e6' }}>
-                    <Text strong style={{ color: '#faad14' }}>{progressData.assignments.inProgress || 0}</Text>
-                    <br />
-                    <Text type="secondary">In Progress</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff2f0' }}>
-                    <Text strong style={{ color: '#ff4d4f' }}>{progressData.assignments.notStarted || 0}</Text>
-                    <br />
-                    <Text type="secondary">Not Started</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#e6f7ff' }}>
-                    <Text strong style={{ color: '#1890ff' }}>{progressData.assignments.passed || 0}</Text>
-                    <br />
-                    <Text type="secondary">Passed</Text>
-                  </Card>
-                </Col>
-              </Row>
-
-              {/* Action Buttons */}
-              <Divider />
-              <Row justify="center">
-                <Space>
-                  <Button 
-                    type="primary" 
-                    icon={<TrophyOutlined />}
-                    onClick={() => {
-                      setAssignmentsModalVisible(false);
-                      navigate('/assignment-dashboard');
-                    }}
-                  >
-                    View Assignments
-                  </Button>
-                  <Button 
-                    type="default" 
-                    icon={<LineChartOutlined />}
-                    onClick={() => {
-                      setAssignmentsModalVisible(false);
-                      navigate('/assignment-history');
-                    }}
-                  >
-                    Assignment History
-                  </Button>
-                </Space>
-              </Row>
-            </div>
-          ) : (
-            <Empty description="No assignment data available" />
-          )}
-        </Modal>
-
-        {/* Quizzes Detailed Modal */}
-        <Modal
-          title={
-            <Space>
-              <QuestionCircleOutlined style={{ color: '#52c41a' }} />
-              <span>Quizzes Details</span>
-            </Space>
-          }
-          open={quizzesModalVisible}
-          onCancel={() => setQuizzesModalVisible(false)}
-          footer={null}
-          width={800}
-        >
-          {progressData?.quizzes ? (
-            <div>
-              {/* Overall Progress */}
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text strong>Overall Quiz Progress</Text>
-                  <Text type="secondary">
-                    {progressData.quizzes.completed || 0} of {progressData.quizzes.total || 0} quizzes completed
-                  </Text>
-                </div>
-                <Progress
-                  percent={progressData.breakdown?.quizzes?.percentage || 0}
-                  status={(progressData.breakdown?.quizzes?.percentage || 0) >= 80 ? 'success' : 
-                         (progressData.breakdown?.quizzes?.percentage || 0) >= 50 ? 'active' : 'exception'}
-                  strokeWidth={12}
-                  format={percent => `${percent}%`}
-                />
-              </div>
-
-              {/* Detailed Statistics */}
-              <Row gutter={[16, 16]}>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#f6ffed' }}>
-                    <Text strong style={{ color: '#52c41a' }}>{progressData.quizzes.completed || 0}</Text>
-                    <br />
-                    <Text type="secondary">Completed</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff7e6' }}>
-                    <Text strong style={{ color: '#faad14' }}>{progressData.quizzes.inProgress || 0}</Text>
-                    <br />
-                    <Text type="secondary">In Progress</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff2f0' }}>
-                    <Text strong style={{ color: '#ff4d4f' }}>{progressData.quizzes.notStarted || 0}</Text>
-                    <br />
-                    <Text type="secondary">Not Started</Text>
-                  </Card>
-                </Col>
-                <Col xs={12}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#e6f7ff' }}>
-                    <Text strong style={{ color: '#1890ff' }}>{progressData.quizzes.passed || 0}</Text>
-                    <br />
-                    <Text type="secondary">Passed</Text>
-                  </Card>
-                </Col>
-              </Row>
-
-              {/* Action Buttons */}
-              <Divider />
-              <Row justify="center">
-                <Space>
-                  <Button 
-                    type="primary" 
-                    icon={<QuestionCircleOutlined />}
-                    onClick={() => {
-                      setQuizzesModalVisible(false);
-                      navigate('/quiz-dashboard');
-                    }}
-                  >
-                    Take Quizzes
-                  </Button>
-                  <Button 
-                    type="default" 
-                    icon={<LineChartOutlined />}
-                    onClick={() => {
-                      setQuizzesModalVisible(false);
-                      navigate('/quiz-history');
-                    }}
-                  >
-                    Quiz History
-                  </Button>
-                </Space>
-              </Row>
-            </div>
-          ) : (
-            <Empty description="No quiz data available" />
-          )}
-        </Modal>
-
-        {/* Live Classes Detailed Modal */}
-        <Modal
-          title={
-            <Space>
-              <VideoCameraOutlined style={{ color: '#faad14' }} />
-              <span>Live Classes Details</span>
-            </Space>
-          }
-          open={liveClassesModalVisible}
-          onCancel={() => setLiveClassesModalVisible(false)}
-          footer={null}
-          width={800}
-        >
-          {studentAttendance ? (
-            <div>
-              {/* Overall Progress */}
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text strong>Overall Attendance Progress</Text>
-                  <Text type="secondary">
-                    {studentAttendance.stats.present || 0} of {studentAttendance.stats.totalClasses || 0} classes attended
-                  </Text>
-                </div>
-                <Progress
-                  percent={studentAttendance.stats.attendancePercentage || 0}
-                  status={studentAttendance.stats.attendancePercentage >= 80 ? 'success' : 
-                         studentAttendance.stats.attendancePercentage >= 50 ? 'active' : 'exception'}
-                  strokeWidth={12}
-                  format={percent => `${percent}%`}
-                />
-              </div>
-
-              {/* Detailed Statistics */}
-              <Row gutter={[16, 16]}>
-                <Col xs={8}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#f6ffed' }}>
-                    <Text strong style={{ color: '#52c41a' }}>{studentAttendance.stats.present || 0}</Text>
-                    <br />
-                    <Text type="secondary">Present</Text>
-                  </Card>
-                </Col>
-                <Col xs={8}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff7e6' }}>
-                    <Text strong style={{ color: '#faad14' }}>{studentAttendance.stats.partial || 0}</Text>
-                    <br />
-                    <Text type="secondary">Partial</Text>
-                  </Card>
-                </Col>
-                <Col xs={8}>
-                  <Card size="small" style={{ textAlign: 'center', backgroundColor: '#fff2f0' }}>
-                    <Text strong style={{ color: '#ff4d4f' }}>{studentAttendance.stats.absent || 0}</Text>
-                    <br />
-                    <Text type="secondary">Absent</Text>
-                  </Card>
-                </Col>
-              </Row>
-
-              {/* Attendance Rate */}
-              <Divider />
-              <Row justify="center">
-                <Card size="small" style={{ textAlign: 'center', backgroundColor: '#e6f7ff' }}>
-                  <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
-                    {studentAttendance.stats.attendancePercentage || 0}%
-                  </Text>
-                  <br />
-                  <Text type="secondary">Attendance Rate</Text>
-                </Card>
-              </Row>
-
-              {/* Action Buttons */}
-              <Divider />
-              <Row justify="center">
-                <Space>
-                  <Button 
-                    type="primary" 
-                    icon={<VideoCameraOutlined />}
-                    onClick={() => {
-                      setLiveClassesModalVisible(false);
-                      setAllClassesModalVisible(true);
-                    }}
-                  >
-                    View All Classes
-                  </Button>
-                  <Button 
-                    type="default" 
-                    icon={<LineChartOutlined />}
-                    onClick={() => {
-                      setLiveClassesModalVisible(false);
-                      setAttendanceModalVisible(true);
-                    }}
-                  >
-                    Attendance Details
-                  </Button>
-                </Space>
-              </Row>
-            </div>
-          ) : (
-            <Empty description="No attendance data available" />
-          )}
-        </Modal>
-        
       </div>
     </div>
   );
