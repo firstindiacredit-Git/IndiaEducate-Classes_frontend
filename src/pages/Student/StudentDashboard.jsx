@@ -26,7 +26,7 @@ import axios from 'axios';
 const { Title, Text } = Typography;
 
 // Custom Calendar Component
-const CustomCalendar = ({ classes, onDateClick }) => {
+const CustomCalendar = ({ classes, onDateClick, profile }) => {
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -1258,7 +1258,7 @@ const StudentDashboard = () => {
                     </Button>
                   }
                 >
-                  <CustomCalendar classes={allClasses} />
+                  <CustomCalendar classes={allClasses} profile={profile} />
                 </Card>
               </Col>
               {/* Quizzes Card */}
