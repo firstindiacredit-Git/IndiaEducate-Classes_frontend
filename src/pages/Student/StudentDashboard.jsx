@@ -1146,7 +1146,12 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="CERTIFICATES / ACHIEVEMENTS">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button icon={<TrophyOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<TrophyOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/certificate')}
+                    >
                       View certificates
                     </Button>
                     <Button

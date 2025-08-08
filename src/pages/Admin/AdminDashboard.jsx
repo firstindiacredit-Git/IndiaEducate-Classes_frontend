@@ -15,6 +15,7 @@ import {
   TeamOutlined,
   ExclamationCircleOutlined,
   UploadOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -400,6 +401,22 @@ const AdminDashboard = () => {
                 value="Speaking Tasks"
                 prefix={<VideoCameraOutlined style={{ color: '#722ed1' }} />}
                 valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
+          {/* Certificate Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/certificate-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="Certificate Management"
+                value="Approve & Manage"
+                prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
+                valueStyle={{ color: '#faad14', fontSize: '14px' }}
               />
             </Card>
           </Col>

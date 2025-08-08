@@ -31,6 +31,8 @@ import SubmitAssignment from './pages/Student/SubmitAssignment';
 import AssignmentHistory from './pages/Student/AssignmentHistory';
 import AssignmentSubmissionDetails from './pages/Student/AssignmentSubmissionDetails';
 import ProgressTracking from './pages/Student/ProgressTracking';
+import Certificate from './pages/Student/Certificate';
+import CertificateManagement from './pages/Admin/CertificateManagement';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -156,6 +158,16 @@ const AppRoutes = () => {
       <Route path="/progress-tracking" element={
         <ProtectedRoute requiredRole="student">
           <ProgressTracking />
+        </ProtectedRoute>
+      } />
+      <Route path="/certificate" element={
+        <ProtectedRoute requiredRole="student">
+          <Certificate />
+        </ProtectedRoute>
+      } />
+      <Route path="/certificate-management" element={
+        <ProtectedRoute requiredRole="admin">
+          <CertificateManagement />
         </ProtectedRoute>
       } />
 

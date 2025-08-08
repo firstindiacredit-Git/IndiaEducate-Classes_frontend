@@ -13,7 +13,8 @@ import {
   MailOutlined,
   IdcardOutlined,
   EditOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -30,6 +31,7 @@ const StudentManagement = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [certificates, setCertificates] = useState([]);
   const { countries, loading: countriesLoading, renderCountryLabel } = useCountries();
 
   // Fetch all students
@@ -45,8 +47,22 @@ const StudentManagement = () => {
     }
   };
 
+  // Fetch all certificates
+  const fetchCertificates = async () => {
+    try {
+      const emailOrPhone = localStorage.getItem('adminEmailOrPhone');
+      const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/certificates/admin/requests`, {
+        emailOrPhone
+      });
+      setCertificates(res.data);
+    } catch (err) {
+      console.error('Failed to fetch certificates:', err);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchCertificates();
   }, []);
 
   // Delete student
@@ -195,6 +211,27 @@ const StudentManagement = () => {
           {isVerified ? 'Verified' : 'Not Verified'}
         </Tag>
       ),
+    },
+    {
+      title: 'Certificate',
+      key: 'certificate',
+      render: (_, record) => {
+        const certificate = certificates.find(cert => cert.studentId?._id === record._id);
+        
+        if (!certificate) {
+          return <Tag color="default" icon={<TrophyOutlined />}>Not Requested</Tag>;
+        }
+        
+        if (certificate.isGenerated) {
+          return <Tag color="success" icon={<TrophyOutlined />}>Generated</Tag>;
+        }
+        
+        if (certificate.isAllowedByAdmin) {
+          return <Tag color="processing" icon={<TrophyOutlined />}>Approved</Tag>;
+        }
+        
+        return <Tag color="warning" icon={<TrophyOutlined />}>Pending</Tag>;
+      },
     },
     {
       title: 'Action',
