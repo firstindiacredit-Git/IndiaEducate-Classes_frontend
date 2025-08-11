@@ -16,6 +16,8 @@ import {
   ExclamationCircleOutlined,
   UploadOutlined,
   TrophyOutlined,
+  MessageOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -417,6 +419,38 @@ const AdminDashboard = () => {
                 value="Approve & Manage"
                 prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
                 valueStyle={{ color: '#faad14', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
+          {/* Ticket Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/ticket-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="Ticket Management"
+                value="Support & Issues"
+                prefix={<MessageOutlined style={{ color: '#13c2c2' }} />}
+                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
+          {/* Contact Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/contact-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="Contact Management"
+                value="Contact Forms"
+                prefix={<MailOutlined style={{ color: '#722ed1' }} />}
+                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
               />
             </Card>
           </Col>

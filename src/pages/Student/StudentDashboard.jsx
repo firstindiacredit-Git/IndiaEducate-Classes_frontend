@@ -18,7 +18,8 @@ import {
   ReloadOutlined,
   CheckCircleOutlined,
   FieldTimeOutlined,
-  CloseCircleOutlined
+  CloseCircleOutlined,
+  MessageOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
@@ -1253,11 +1254,24 @@ const StudentDashboard = () => {
               <Col xs={24}>
                 <Card title="SUPPORT">
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button icon={<QuestionCircleOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<QuestionCircleOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/help-center')}
+                    >
                       Help Center
                     </Button>
-                    <Button icon={<MailOutlined />} block style={{ textAlign: 'left' }}>
-                      Contact us
+                    <Button 
+                      icon={<MailOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/contact-us')}
+                    >
+                      Contact Us
+                    </Button>
+                    <Button icon={<MessageOutlined />} block style={{ textAlign: 'left' }}>
+                      FAQ
                     </Button>
                   </Space>
                 </Card>

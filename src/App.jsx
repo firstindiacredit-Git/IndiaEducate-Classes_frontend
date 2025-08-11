@@ -33,6 +33,10 @@ import AssignmentSubmissionDetails from './pages/Student/AssignmentSubmissionDet
 import ProgressTracking from './pages/Student/ProgressTracking';
 import Certificate from './pages/Student/Certificate';
 import CertificateManagement from './pages/Admin/CertificateManagement';
+import HelpCenter from './pages/Student/HelpCenter';
+import ContactUs from './pages/Student/ContactUs';
+import TicketManagement from './pages/Admin/TicketManagement';
+import ContactManagement from './pages/Admin/ContactManagement';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -170,6 +174,26 @@ const AppRoutes = () => {
           <CertificateManagement />
         </ProtectedRoute>
       } />
+              <Route path="/help-center" element={
+          <ProtectedRoute requiredRole="student">
+            <HelpCenter />
+          </ProtectedRoute>
+        } />
+        <Route path="/contact-us" element={
+          <ProtectedRoute requiredRole="student">
+            <ContactUs />
+          </ProtectedRoute>
+        } />
+        <Route path="/ticket-management" element={
+          <ProtectedRoute requiredRole="admin">
+            <TicketManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/contact-management" element={
+          <ProtectedRoute requiredRole="admin">
+            <ContactManagement />
+          </ProtectedRoute>
+        } />
 
       {/* Catch all route */}
       <Route path="*" element={
