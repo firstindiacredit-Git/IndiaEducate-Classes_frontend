@@ -362,7 +362,7 @@ const AdminDashboard = () => {
             </Col>
 
             {/* File Upload Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/file-upload')}
@@ -375,10 +375,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#722ed1', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Quiz Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/quiz-management')}
@@ -391,10 +391,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Assignment Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/assignment-management')}
@@ -407,10 +407,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#722ed1', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Certificate Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/certificate-management')}
@@ -423,10 +423,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#faad14', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Ticket Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/ticket-management')}
@@ -439,10 +439,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Contact Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/contact-management')}
@@ -455,10 +455,10 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#722ed1', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* FAQ Management */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 onClick={() => navigate('/faq-management')}
@@ -471,7 +471,7 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
             {/* Connection Issues */}
             <Col xs={24} sm={12} lg={6}>

@@ -43,14 +43,25 @@ const Signup = () => {
         emailOrPhone,
         otp: values.otp,
       });
-      message.success('Account verified! Please complete your profile.');
-      setShowOTP(false);
-      form.resetFields();
-      otpForm.resetFields();
-      // Store email for profile fetch
-      localStorage.setItem('studentEmailOrPhone', emailOrPhone);
-      // For new signups, always redirect to create profile
-      navigate('/create-profile');
+      
+      // Check if this was a new signup (account created) or existing user login
+      if (res.data.message === 'OTP verified, account created successfully') {
+        message.success('Account created successfully! Please complete your profile.');
+        setShowOTP(false);
+        form.resetFields();
+        otpForm.resetFields();
+        // Store email for profile fetch
+        localStorage.setItem('studentEmailOrPhone', emailOrPhone);
+        // For new signups, always redirect to create profile
+        navigate('/create-profile');
+      } else {
+        message.success('Login successful!');
+        setShowOTP(false);
+        form.resetFields();
+        otpForm.resetFields();
+        // For existing users, redirect to dashboard
+        navigate('/student-dashboard');
+      }
     } catch (err) {
       message.error(err.response?.data?.message || 'OTP verification failed');
     } finally {
