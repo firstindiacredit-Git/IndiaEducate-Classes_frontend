@@ -35,8 +35,10 @@ import Certificate from './pages/Student/Certificate';
 import CertificateManagement from './pages/Admin/CertificateManagement';
 import HelpCenter from './pages/Student/HelpCenter';
 import ContactUs from './pages/Student/ContactUs';
+import FAQ from './pages/Student/FAQ';
 import TicketManagement from './pages/Admin/TicketManagement';
 import ContactManagement from './pages/Admin/ContactManagement';
+import FAQManagement from './pages/Admin/FAQManagement';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -184,6 +186,11 @@ const AppRoutes = () => {
             <ContactUs />
           </ProtectedRoute>
         } />
+        <Route path="/faq" element={
+          <ProtectedRoute requiredRole="student">
+            <FAQ />
+          </ProtectedRoute>
+        } />
         <Route path="/ticket-management" element={
           <ProtectedRoute requiredRole="admin">
             <TicketManagement />
@@ -192,6 +199,11 @@ const AppRoutes = () => {
         <Route path="/contact-management" element={
           <ProtectedRoute requiredRole="admin">
             <ContactManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/faq-management" element={
+          <ProtectedRoute requiredRole="admin">
+            <FAQManagement />
           </ProtectedRoute>
         } />
 

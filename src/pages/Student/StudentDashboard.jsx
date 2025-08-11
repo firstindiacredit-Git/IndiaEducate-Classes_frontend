@@ -1270,7 +1270,12 @@ const StudentDashboard = () => {
                     >
                       Contact Us
                     </Button>
-                    <Button icon={<MessageOutlined />} block style={{ textAlign: 'left' }}>
+                    <Button 
+                      icon={<MessageOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/faq')}
+                    >
                       FAQ
                     </Button>
                   </Space>

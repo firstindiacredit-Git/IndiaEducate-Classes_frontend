@@ -18,6 +18,7 @@ import {
   TrophyOutlined,
   MessageOutlined,
   MailOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -451,6 +452,22 @@ const AdminDashboard = () => {
                 value="Contact Forms"
                 prefix={<MailOutlined style={{ color: '#722ed1' }} />}
                 valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+              />
+            </Card>
+          </Col>
+
+          {/* FAQ Management */}
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              hoverable
+              onClick={() => navigate('/faq-management')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Statistic
+                title="FAQ Management"
+                value="Help & Support"
+                prefix={<QuestionCircleOutlined style={{ color: '#13c2c2' }} />}
+                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
               />
             </Card>
           </Col>
