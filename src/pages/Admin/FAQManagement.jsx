@@ -19,7 +19,8 @@ import {
   Alert,
   Empty,
   Spin,
-  Tooltip
+  Tooltip,
+  Layout
 } from 'antd';
 import {
   PlusOutlined,
@@ -41,6 +42,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
@@ -48,10 +50,12 @@ import { useNavigate } from 'react-router-dom';
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
+const { Content } = Layout;
 
 const FAQManagement = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [form] = Form.useForm();
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -348,301 +352,306 @@ const FAQManagement = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
-
-      {/* <div style={{ padding: '24px 40px' }}>
-        <Title level={2}>
-          <QuestionCircleOutlined style={{ marginRight: '8px' }} />
-          FAQ Management
-        </Title> */}
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
-            />
-            <Title level={2} style={{ margin: 0 }}> <QuestionCircleOutlined style={{ marginRight: '8px' }} />
-              FAQ Management
-              </Title>
-          </Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingQuiz(null);
-              form.resetFields();
-              setModalVisible(true);
-            }}
-          >
-            Create Quiz
-          </Button>
-        </Row>
-
-        {/* Statistics */}
-        {stats && (
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Total FAQs"
-                  value={stats.totalFAQs}
-                  prefix={<QuestionCircleOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Active FAQs"
-                  value={stats.activeFAQs}
-                  prefix={<StarOutlined />}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Total Views"
-                  value={stats.totalViews}
-                  prefix={<EyeOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card>
-                <Statistic
-                  title="Total Helpful"
-                  value={stats.totalHelpful || 0}
-                  prefix={<StarOutlined />}
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-        )}
-
-        {/* Filters and Actions */}
-        <Card style={{ marginBottom: 24 }}>
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={8}>
-              <Input
-                placeholder="Search FAQs..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space align="center">
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
               />
-            </Col>
-            <Col xs={24} sm={6}>
-              <Select
-                placeholder="Filter by category"
-                value={categoryFilter}
-                onChange={setCategoryFilter}
-                style={{ width: '100%' }}
-              >
-                <Option value="all">All Categories</Option>
-                {categoryOptions.map(option => (
-                  <Option key={option.value} value={option.value}>
-                    {option.icon} {option.label}
-                  </Option>
-                ))}
-              </Select>
-            </Col>
-            <Col xs={24} sm={4}>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  setSearchText('');
-                  setCategoryFilter('all');
-                  setCurrentPage(1);
-                }}
-                block
-              >
-                Reset
-              </Button>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setEditingFAQ(null);
-                  form.resetFields();
-                  setModalVisible(true);
-                }}
-                block
-              >
-                Add New FAQ
-              </Button>
-            </Col>
-          </Row>
-        </Card>
-
-        {/* FAQs Table */}
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={faqs}
-            rowKey="_id"
-            loading={loading}
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalFAQs,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} FAQs`,
-              onChange: (page, size) => {
-                setCurrentPage(page);
-                setPageSize(size);
-              }
-            }}
-            scroll={{ x: 1200 }}
-          />
-        </Card>
-
-        {/* Add/Edit FAQ Modal */}
-        <Modal
-          title={
-            <Space>
-              {editingFAQ ? <EditOutlined /> : <PlusOutlined />}
-              <span>{editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}</span>
+              <Title level={2} style={{ margin: 0 }}> <QuestionCircleOutlined style={{ marginRight: '8px' }} />
+                FAQ Management
+                </Title>
             </Space>
-          }
-          open={modalVisible}
-          onCancel={() => {
-            setModalVisible(false);
-            setEditingFAQ(null);
-            form.resetFields();
-          }}
-          footer={null}
-          width={800}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            initialValues={{
-              category: 'general',
-              priority: 0,
-              isActive: true,
-              tags: []
-            }}
-          >
-            <Form.Item
-              name="question"
-              label="Question"
-              rules={[{ required: true, message: 'Please enter the question' }]}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingFAQ(null);
+                form.resetFields();
+                setModalVisible(true);
+              }}
             >
-              <Input placeholder="Enter the question..." />
-            </Form.Item>
+              Create FAQ
+            </Button>
+          </Row>
 
-            <Form.Item
-              name="answer"
-              label="Answer"
-              rules={[{ required: true, message: 'Please enter the answer' }]}
-            >
-              <TextArea
-                rows={6}
-                placeholder="Enter the detailed answer..."
-              />
-            </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="category"
-                  label="Category"
-                  rules={[{ required: true, message: 'Please select a category' }]}
-                >
-                  <Select placeholder="Select category">
-                    {categoryOptions.map(option => (
-                      <Option key={option.value} value={option.value}>
-                        {option.icon} {option.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+          {/* Statistics */}
+          {stats && (
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Total FAQs"
+                    value={stats.totalFAQs}
+                    prefix={<QuestionCircleOutlined />}
+                  />
+                </Card>
               </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="priority"
-                  label="Priority (0-10)"
-                  rules={[
-                    { required: true, message: 'Please enter priority' },
-                    {
-                      validator: (_, value) => {
-                        const numValue = parseInt(value);
-                        if (isNaN(numValue) || numValue < 0 || numValue > 10) {
-                          return Promise.reject(new Error('Priority must be between 0 and 10'));
-                        }
-                        return Promise.resolve();
-                      }
-                    }
-                  ]}
-                >
-                  <Input type="number" min={0} max={10} />
-                </Form.Item>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Active FAQs"
+                    value={stats.activeFAQs}
+                    prefix={<StarOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Total Views"
+                    value={stats.totalViews}
+                    prefix={<EyeOutlined />}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={6}>
+                <Card>
+                  <Statistic
+                    title="Total Helpful"
+                    value={stats.totalHelpful || 0}
+                    prefix={<StarOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                </Card>
               </Col>
             </Row>
+          )}
 
-            <Form.Item
-              name="tags"
-              label="Tags (Optional)"
-            >
-              <Select
-                mode="tags"
-                placeholder="Add tags..."
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="isActive"
-              label="Status"
-              valuePropName="checked"
-            >
-              <Select>
-                <Option value={true}>Active</Option>
-                <Option value={false}>Inactive</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item>
-              <Space>
+          {/* Filters and Actions */}
+          <Card style={{ marginBottom: 24 }}>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={8}>
+                <Input
+                  placeholder="Search FAQs..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                />
+              </Col>
+              <Col xs={24} sm={6}>
+                <Select
+                  placeholder="Filter by category"
+                  value={categoryFilter}
+                  onChange={setCategoryFilter}
+                  style={{ width: '100%' }}
+                >
+                  <Option value="all">All Categories</Option>
+                  {categoryOptions.map(option => (
+                    <Option key={option.value} value={option.value}>
+                      {option.icon} {option.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Col>
+              <Col xs={24} sm={4}>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    setSearchText('');
+                    setCategoryFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  block
+                >
+                  Reset
+                </Button>
+              </Col>
+              <Col xs={24} sm={6}>
                 <Button
                   type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  icon={editingFAQ ? <EditOutlined /> : <PlusOutlined />}
-                >
-                  {editingFAQ ? 'Update FAQ' : 'Create FAQ'}
-                </Button>
-                <Button
+                  icon={<PlusOutlined />}
                   onClick={() => {
-                    setModalVisible(false);
                     setEditingFAQ(null);
                     form.resetFields();
+                    setModalVisible(true);
                   }}
+                  block
                 >
-                  Cancel
+                  Add New FAQ
                 </Button>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* FAQs Table */}
+          <Card>
+            <Table
+              columns={columns}
+              dataSource={faqs}
+              rowKey="_id"
+              loading={loading}
+              pagination={{
+                current: currentPage,
+                pageSize: pageSize,
+                total: totalFAQs,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) =>
+                  `${range[0]}-${range[1]} of ${total} FAQs`,
+                onChange: (page, size) => {
+                  setCurrentPage(page);
+                  setPageSize(size);
+                }
+              }}
+              scroll={{ x: 1200 }}
+            />
+          </Card>
+
+          {/* Add/Edit FAQ Modal */}
+          <Modal
+            title={
+              <Space>
+                {editingFAQ ? <EditOutlined /> : <PlusOutlined />}
+                <span>{editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}</span>
               </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
-      </div>
-    </div>
+            }
+            open={modalVisible}
+            onCancel={() => {
+              setModalVisible(false);
+              setEditingFAQ(null);
+              form.resetFields();
+            }}
+            footer={null}
+            width={800}
+          >
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              initialValues={{
+                category: 'general',
+                priority: 0,
+                isActive: true,
+                tags: []
+              }}
+            >
+              <Form.Item
+                name="question"
+                label="Question"
+                rules={[{ required: true, message: 'Please enter the question' }]}
+              >
+                <Input placeholder="Enter the question..." />
+              </Form.Item>
+
+              <Form.Item
+                name="answer"
+                label="Answer"
+                rules={[{ required: true, message: 'Please enter the answer' }]}
+              >
+                <TextArea
+                  rows={6}
+                  placeholder="Enter the detailed answer..."
+                />
+              </Form.Item>
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="category"
+                    label="Category"
+                    rules={[{ required: true, message: 'Please select a category' }]}
+                  >
+                    <Select placeholder="Select category">
+                      {categoryOptions.map(option => (
+                        <Option key={option.value} value={option.value}>
+                          {option.icon} {option.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="priority"
+                    label="Priority (0-10)"
+                    rules={[
+                      { required: true, message: 'Please enter priority' },
+                      {
+                        validator: (_, value) => {
+                          const numValue = parseInt(value);
+                          if (isNaN(numValue) || numValue < 0 || numValue > 10) {
+                            return Promise.reject(new Error('Priority must be between 0 and 10'));
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                  >
+                    <Input type="number" min={0} max={10} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item
+                name="tags"
+                label="Tags (Optional)"
+              >
+                <Select
+                  mode="tags"
+                  placeholder="Add tags..."
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="isActive"
+                label="Status"
+                valuePropName="checked"
+              >
+                <Select>
+                  <Option value={true}>Active</Option>
+                  <Option value={false}>Inactive</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item>
+                <Space>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    icon={editingFAQ ? <EditOutlined /> : <PlusOutlined />}
+                  >
+                    {editingFAQ ? 'Update FAQ' : 'Create FAQ'}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setModalVisible(false);
+                      setEditingFAQ(null);
+                      form.resetFields();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

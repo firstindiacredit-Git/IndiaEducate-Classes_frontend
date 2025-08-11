@@ -21,7 +21,8 @@ import {
   Progress,
   Badge,
   Tooltip,
-  Pagination
+  Pagination,
+  Layout
 } from 'antd';
 import {
   EyeOutlined,
@@ -38,6 +39,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
@@ -45,10 +47,12 @@ import { useNavigate } from 'react-router-dom';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
+const { Content } = Layout;
 
 const TicketManagement = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({});
@@ -283,320 +287,330 @@ const TicketManagement = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space align="center">
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
+              />
+              <Title level={2} style={{ margin: 0 }}>Ticket Management</Title>
+            </Space>
 
-      <div style={{ maxWidth: 1400, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space align="center">
             <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
+              icon={<ReloadOutlined />}
+              onClick={() => {
+                fetchTickets();
+                fetchStats();
               }}
-            />
-            <Title level={2} style={{ margin: 0 }}>Ticket Management</Title>
-          </Space>
+            >
+              Refresh
+            </Button>
+          </Row>
 
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => {
-              fetchTickets();
-              fetchStats();
-            }}
-          >
-            Refresh
-          </Button>
-        </Row>
-
-        {/* Statistics */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Tickets"
-                value={stats.totalTickets || 0}
-                prefix={<FileTextOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Open Tickets"
-                value={stats.openTickets || 0}
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Urgent Tickets"
-                value={stats.urgentTickets || 0}
-                prefix={<ExclamationCircleOutlined />}
-                valueStyle={{ color: '#ff4d4f' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Resolved"
-                value={stats.statusStats?.find(s => s._id === 'resolved')?.count || 0}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Filters */}
-        <Card style={{ marginBottom: 24 }}>
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={8}>
-              <Select
-                placeholder="Filter by Status"
-                style={{ width: '100%' }}
-                allowClear
-                value={filters.status}
-                onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-              >
-                <Option value="open">Open</Option>
-                <Option value="in_progress">In Progress</Option>
-                <Option value="resolved">Resolved</Option>
-                <Option value="closed">Closed</Option>
-              </Select>
+          {/* Statistics */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Tickets"
+                  value={stats.totalTickets || 0}
+                  prefix={<FileTextOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
             </Col>
-            <Col xs={24} sm={8}>
-              <Select
-                placeholder="Filter by Category"
-                style={{ width: '100%' }}
-                allowClear
-                value={filters.category}
-                onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-              >
-                <Option value="technical">Technical</Option>
-                <Option value="academic">Academic</Option>
-                <Option value="payment">Payment</Option>
-                <Option value="other">Other</Option>
-              </Select>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Open Tickets"
+                  value={stats.openTickets || 0}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
             </Col>
-            <Col xs={24} sm={8}>
-              <Select
-                placeholder="Filter by Priority"
-                style={{ width: '100%' }}
-                allowClear
-                value={filters.priority}
-                onChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
-              >
-                <Option value="urgent">Urgent</Option>
-                <Option value="high">High</Option>
-                <Option value="medium">Medium</Option>
-                <Option value="low">Low</Option>
-              </Select>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Urgent Tickets"
+                  value={stats.urgentTickets || 0}
+                  prefix={<ExclamationCircleOutlined />}
+                  valueStyle={{ color: '#ff4d4f' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Resolved"
+                  value={stats.statusStats?.find(s => s._id === 'resolved')?.count || 0}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
             </Col>
           </Row>
-        </Card>
 
-        {/* Tickets Table */}
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={tickets}
-            rowKey="_id"
-            loading={loading}
-            pagination={false}
-            scroll={{ x: 1200 }}
-          />
+          {/* Filters */}
+          <Card style={{ marginBottom: 24 }}>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={8}>
+                <Select
+                  placeholder="Filter by Status"
+                  style={{ width: '100%' }}
+                  allowClear
+                  value={filters.status}
+                  onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                >
+                  <Option value="open">Open</Option>
+                  <Option value="in_progress">In Progress</Option>
+                  <Option value="resolved">Resolved</Option>
+                  <Option value="closed">Closed</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Select
+                  placeholder="Filter by Category"
+                  style={{ width: '100%' }}
+                  allowClear
+                  value={filters.category}
+                  onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                >
+                  <Option value="technical">Technical</Option>
+                  <Option value="academic">Academic</Option>
+                  <Option value="payment">Payment</Option>
+                  <Option value="other">Other</Option>
+                </Select>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Select
+                  placeholder="Filter by Priority"
+                  style={{ width: '100%' }}
+                  allowClear
+                  value={filters.priority}
+                  onChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
+                >
+                  <Option value="urgent">Urgent</Option>
+                  <Option value="high">High</Option>
+                  <Option value="medium">Medium</Option>
+                  <Option value="low">Low</Option>
+                </Select>
+              </Col>
+            </Row>
+          </Card>
 
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <Pagination
-              current={pagination.current}
-              total={pagination.total}
-              pageSize={pagination.pageSize}
-              onChange={fetchTickets}
-              showSizeChanger={false}
-              showQuickJumper
+          {/* Tickets Table */}
+          <Card>
+            <Table
+              columns={columns}
+              dataSource={tickets}
+              rowKey="_id"
+              loading={loading}
+              pagination={false}
+              scroll={{ x: 1200 }}
             />
-          </div>
-        </Card>
 
-        {/* Ticket Details Modal */}
-        <Modal
-          title="Ticket Details"
-          open={modalVisible}
-          onCancel={() => {
-            setModalVisible(false);
-            setSelectedTicket(null);
-          }}
-          footer={null}
-          width={800}
-        >
-          {selectedTicket && (
-            <div>
-              <Descriptions bordered column={2}>
-                <Descriptions.Item label="Ticket ID" span={2}>
-                  <Text code>{selectedTicket.ticketId}</Text>
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Student Name">
-                  {selectedTicket.studentId?.fullName || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Email">
-                  {selectedTicket.studentId?.email || 'N/A'}
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Phone">
-                  {selectedTicket.studentId?.phone || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Enrollment ID">
-                  {selectedTicket.studentId?.enrollmentId || 'N/A'}
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Program">
-                  {selectedTicket.studentId?.program || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Country">
-                  {selectedTicket.studentId?.country || 'N/A'}
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Subject">
-                  {selectedTicket.subject}
-                </Descriptions.Item>
-                <Descriptions.Item label="Category">
-                  <Tag color="blue">
-                    {selectedTicket.category.charAt(0).toUpperCase() + selectedTicket.category.slice(1)}
-                  </Tag>
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Priority">
-                  <Tag color={getPriorityColor(selectedTicket.priority)}>
-                    {selectedTicket.priority.charAt(0).toUpperCase() + selectedTicket.priority.slice(1)}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  <Tag color={getStatusColor(selectedTicket.status)} icon={getStatusIcon(selectedTicket.status)}>
-                    {selectedTicket.status.replace('_', ' ').charAt(0).toUpperCase() + selectedTicket.status.replace('_', ' ').slice(1)}
-                  </Tag>
-                </Descriptions.Item>
-
-                <Descriptions.Item label="Created">
-                  {moment(selectedTicket.createdAt).format('MMMM DD, YYYY [at] h:mm A')}
-                </Descriptions.Item>
-                <Descriptions.Item label="Description" span={2}>
-                  <Text>{selectedTicket.description}</Text>
-                </Descriptions.Item>
-              </Descriptions>
-
-              {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
-                <>
-                  <Divider />
-                  <Title level={5}>Attachments</Title>
-                  <Space direction="vertical">
-                    {selectedTicket.attachments.map((attachment, index) => (
-                      <a
-                        key={index}
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <FileTextOutlined /> {attachment.filename}
-                      </a>
-                    ))}
-                  </Space>
-                </>
-              )}
-
-              {selectedTicket.adminResponse && (
-                <>
-                  <Divider />
-                  <Title level={5}>Admin Response</Title>
-                  <Alert
-                    message={`Response from ${selectedTicket.adminResponse.respondedBy?.fullName || 'Admin'}`}
-                    description={
-                      <div>
-                        <Text>{selectedTicket.adminResponse.message}</Text>
-                        <br />
-                        <Text type="secondary">
-                          {moment(selectedTicket.adminResponse.respondedAt).format('MMMM DD, YYYY [at] h:mm A')}
-                        </Text>
-                      </div>
-                    }
-                    type="info"
-                    showIcon
-                  />
-                </>
-              )}
-
-              {selectedTicket.status !== 'closed' && (
-                <>
-                  <Divider />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => setResponseModalVisible(true)}
-                    >
-                      Add Response
-                    </Button>
-                    <Select
-                      placeholder="Update Status"
-                      style={{ width: 200 }}
-                      onChange={(value) => handleStatusUpdate(selectedTicket.ticketId, value)}
-                    >
-                      <Option value="open">Open</Option>
-                      <Option value="in_progress">In Progress</Option>
-                      <Option value="resolved">Resolved</Option>
-                      <Option value="closed">Closed</Option>
-                    </Select>
-                  </Space>
-                </>
-              )}
-            </div>
-          )}
-        </Modal>
-
-        {/* Admin Response Modal */}
-        <Modal
-          title="Add Admin Response"
-          open={responseModalVisible}
-          onCancel={() => {
-            setResponseModalVisible(false);
-            form.resetFields();
-          }}
-          footer={null}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleAdminResponse}
-          >
-            <Form.Item
-              name="response"
-              label="Response"
-              rules={[{ required: true, message: 'Please enter your response' }]}
-            >
-              <TextArea
-                rows={4}
-                placeholder="Enter your response to the student..."
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Pagination
+                current={pagination.current}
+                total={pagination.total}
+                pageSize={pagination.pageSize}
+                onChange={fetchTickets}
+                showSizeChanger={false}
+                showQuickJumper
               />
-            </Form.Item>
+            </div>
+          </Card>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Send Response
-              </Button>
-            </Form.Item>
-          </Form>
-        </Modal>
-      </div>
-    </div>
+          {/* Ticket Details Modal */}
+          <Modal
+            title="Ticket Details"
+            open={modalVisible}
+            onCancel={() => {
+              setModalVisible(false);
+              setSelectedTicket(null);
+            }}
+            footer={null}
+            width={800}
+          >
+            {selectedTicket && (
+              <div>
+                <Descriptions bordered column={2}>
+                  <Descriptions.Item label="Ticket ID" span={2}>
+                    <Text code>{selectedTicket.ticketId}</Text>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Student Name">
+                    {selectedTicket.studentId?.fullName || 'N/A'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Email">
+                    {selectedTicket.studentId?.email || 'N/A'}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Phone">
+                    {selectedTicket.studentId?.phone || 'N/A'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Enrollment ID">
+                    {selectedTicket.studentId?.enrollmentId || 'N/A'}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Program">
+                    {selectedTicket.studentId?.program || 'N/A'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Country">
+                    {selectedTicket.studentId?.country || 'N/A'}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Subject">
+                    {selectedTicket.subject}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Category">
+                    <Tag color="blue">
+                      {selectedTicket.category.charAt(0).toUpperCase() + selectedTicket.category.slice(1)}
+                    </Tag>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Priority">
+                    <Tag color={getPriorityColor(selectedTicket.priority)}>
+                      {selectedTicket.priority.charAt(0).toUpperCase() + selectedTicket.priority.slice(1)}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    <Tag color={getStatusColor(selectedTicket.status)} icon={getStatusIcon(selectedTicket.status)}>
+                      {selectedTicket.status.replace('_', ' ').charAt(0).toUpperCase() + selectedTicket.status.replace('_', ' ').slice(1)}
+                    </Tag>
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Created">
+                    {moment(selectedTicket.createdAt).format('MMMM DD, YYYY [at] h:mm A')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Description" span={2}>
+                    <Text>{selectedTicket.description}</Text>
+                  </Descriptions.Item>
+                </Descriptions>
+
+                {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+                  <>
+                    <Divider />
+                    <Title level={5}>Attachments</Title>
+                    <Space direction="vertical">
+                      {selectedTicket.attachments.map((attachment, index) => (
+                        <a
+                          key={index}
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <FileTextOutlined /> {attachment.filename}
+                        </a>
+                      ))}
+                    </Space>
+                  </>
+                )}
+
+                {selectedTicket.adminResponse && (
+                  <>
+                    <Divider />
+                    <Title level={5}>Admin Response</Title>
+                    <Alert
+                      message={`Response from ${selectedTicket.adminResponse.respondedBy?.fullName || 'Admin'}`}
+                      description={
+                        <div>
+                          <Text>{selectedTicket.adminResponse.message}</Text>
+                          <br />
+                          <Text type="secondary">
+                            {moment(selectedTicket.adminResponse.respondedAt).format('MMMM DD, YYYY [at] h:mm A')}
+                          </Text>
+                        </div>
+                      }
+                      type="info"
+                      showIcon
+                    />
+                  </>
+                )}
+
+                {selectedTicket.status !== 'closed' && (
+                  <>
+                    <Divider />
+                    <Space>
+                      <Button
+                        type="primary"
+                        onClick={() => setResponseModalVisible(true)}
+                      >
+                        Add Response
+                      </Button>
+                      <Select
+                        placeholder="Update Status"
+                        style={{ width: 200 }}
+                        onChange={(value) => handleStatusUpdate(selectedTicket.ticketId, value)}
+                      >
+                        <Option value="open">Open</Option>
+                        <Option value="in_progress">In Progress</Option>
+                        <Option value="resolved">Resolved</Option>
+                        <Option value="closed">Closed</Option>
+                      </Select>
+                    </Space>
+                  </>
+                )}
+              </div>
+            )}
+          </Modal>
+
+          {/* Admin Response Modal */}
+          <Modal
+            title="Add Admin Response"
+            open={responseModalVisible}
+            onCancel={() => {
+              setResponseModalVisible(false);
+              form.resetFields();
+            }}
+            footer={null}
+          >
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleAdminResponse}
+            >
+              <Form.Item
+                name="response"
+                label="Response"
+                rules={[{ required: true, message: 'Please enter your response' }]}
+              >
+                <TextArea
+                  rows={4}
+                  placeholder="Enter your response to the student..."
+                />
+              </Form.Item>
+
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Send Response
+                </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

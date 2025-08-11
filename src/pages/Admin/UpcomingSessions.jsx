@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Form, Input, DatePicker, Select, Row } from 'antd';
+import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Form, Input, DatePicker, Select, Row, Layout } from 'antd';
 import { VideoCameraOutlined, EditOutlined, HistoryOutlined, ClockCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import { useSocket } from '../../component/SocketProvider';
@@ -10,10 +11,12 @@ import { useSocket } from '../../component/SocketProvider';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { Content } = Layout;
 
 const UpcomingSessions = () => {
   const navigate = useNavigate();
   const { socket, isConnected } = useSocket();
+  const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
@@ -390,35 +393,44 @@ const UpcomingSessions = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space>
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
-            />
-            <Title level={2} style={{ margin: 0 }}>Upcoming Sessions</Title>
-          </Space>
-        </Row>
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space>
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
+              />
+              <Title level={2} style={{ margin: 0 }}>Upcoming Sessions</Title>
+            </Space>
+          </Row>
 
-        <Card>
-          <Table
-            loading={loading}
-            columns={classColumns}
-            dataSource={upcomingClasses}
-            rowKey="_id"
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
+          <Card>
+            <Table
+              loading={loading}
+              columns={classColumns}
+              dataSource={upcomingClasses}
+              rowKey="_id"
+              pagination={{ pageSize: 10 }}
+            />
+          </Card>
 
         {/* Edit Class Modal */}
         <Modal
@@ -652,8 +664,9 @@ const UpcomingSessions = () => {
         </Modal>
 
 
-      </div>
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

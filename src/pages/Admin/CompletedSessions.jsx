@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Row, Col, Statistic } from 'antd';
+import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Row, Col, Statistic, Layout } from 'antd';
 import { HistoryOutlined, CheckCircleOutlined, TeamOutlined, FieldTimeOutlined, CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import momentTimezone from 'moment-timezone';
 
 const { Title } = Typography;
+const { Content } = Layout;
 
 const CompletedSessions = () => {
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [completedSessions, setCompletedSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -180,35 +183,44 @@ const CompletedSessions = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space>
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
+              />
+              <Title level={2} style={{ margin: 0 }}>Completed Sessions</Title>
+            </Space>
+          </Row>
 
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space>
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
+          <Card>
+            <Table
+              loading={loading}
+              columns={completedSessionsColumns}
+              dataSource={completedSessions}
+              rowKey="_id"
+              pagination={{ pageSize: 10 }}
             />
-            <Title level={2} style={{ margin: 0 }}>Completed Sessions</Title>
-          </Space>
-        </Row>
-
-        <Card>
-          <Table
-            loading={loading}
-            columns={completedSessionsColumns}
-            dataSource={completedSessions}
-            rowKey="_id"
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
+          </Card>
 
         {/* Session Detail Modal */}
         <Modal
@@ -374,8 +386,9 @@ const CompletedSessions = () => {
             </>
           )}
         </Modal>
-      </div>
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

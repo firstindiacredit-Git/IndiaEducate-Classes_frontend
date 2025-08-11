@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Alert, Row } from 'antd';
+import { Typography, Card, Table, Tag, Space, Button, Modal, Descriptions, Divider, message, Alert, Row, Layout } from 'antd';
 import { HistoryOutlined, WarningOutlined, SyncOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import momentTimezone from 'moment-timezone';
 import { useSocket } from '../../component/SocketProvider';
 
 const { Title } = Typography;
+const { Content } = Layout;
 
 const ExpiredSessions = () => {
   const navigate = useNavigate();
   const { socket, isConnected } = useSocket();
+  const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expiredSessions, setExpiredSessions] = useState([]);
   const [selectedExpiredSession, setSelectedExpiredSession] = useState(null);
@@ -150,147 +153,157 @@ const ExpiredSessions = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space>
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
-            />
-            <Title level={2} style={{ margin: 0 }}>Expired Sessions</Title>
-          </Space>
-          <Button
-            type="primary"
-            onClick={checkExpiredClasses}
-            icon={<SyncOutlined />}
-          >
-            Check for Expired Classes
-          </Button>
-        </Row>
-
-        <Alert
-          message="These sessions were not started at their scheduled time"
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-
-        <Card>
-          <Table
-            loading={loading}
-            columns={expiredSessionsColumns}
-            dataSource={expiredSessions}
-            rowKey="_id"
-            pagination={{ pageSize: 10 }}
-          />
-        </Card>
-
-        {/* Expired Session Detail Modal */}
-        <Modal
-          title={
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
             <Space>
-              <WarningOutlined style={{ color: '#ff4d4f' }} />
-              <span>Expired Session Details</span>
-            </Space>
-          }
-          open={expiredSessionDetailModalVisible}
-          onCancel={() => {
-            setExpiredSessionDetailModalVisible(false);
-            setSelectedExpiredSession(null);
-          }}
-          width={700}
-          footer={[
-            <Button 
-              key="close" 
-              type="primary"
-              onClick={() => {
-                setExpiredSessionDetailModalVisible(false);
-                setSelectedExpiredSession(null);
-              }}
-            >
-              Close
-            </Button>
-          ]}
-        >
-          {selectedExpiredSession && (
-            <>
-              <Alert
-                message="This session was not started at the scheduled time"
-                type="warning"
-                showIcon
-                style={{ marginBottom: 16 }}
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
               />
-              
-              <Descriptions
-                bordered
-                column={1}
-                size="small"
-                labelStyle={{ fontWeight: 'bold', width: '150px' }}
+              <Title level={2} style={{ margin: 0 }}>Expired Sessions</Title>
+            </Space>
+            <Button
+              type="primary"
+              onClick={checkExpiredClasses}
+              icon={<SyncOutlined />}
+            >
+              Check for Expired Classes
+            </Button>
+          </Row>
+
+          <Alert
+            message="These sessions were not started at their scheduled time"
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+
+          <Card>
+            <Table
+              loading={loading}
+              columns={expiredSessionsColumns}
+              dataSource={expiredSessions}
+              rowKey="_id"
+              pagination={{ pageSize: 10 }}
+            />
+          </Card>
+
+          {/* Expired Session Detail Modal */}
+          <Modal
+            title={
+              <Space>
+                <WarningOutlined style={{ color: '#ff4d4f' }} />
+                <span>Expired Session Details</span>
+              </Space>
+            }
+            open={expiredSessionDetailModalVisible}
+            onCancel={() => {
+              setExpiredSessionDetailModalVisible(false);
+              setSelectedExpiredSession(null);
+            }}
+            width={700}
+            footer={[
+              <Button 
+                key="close" 
+                type="primary"
+                onClick={() => {
+                  setExpiredSessionDetailModalVisible(false);
+                  setSelectedExpiredSession(null);
+                }}
               >
-                <Descriptions.Item label="Session Title">
-                  {selectedExpiredSession.title}
-                </Descriptions.Item>
-                <Descriptions.Item label="Description">
-                  {selectedExpiredSession.description || 'No description provided'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Program">
-                  <Tag color={selectedExpiredSession.program === '24-session' ? 'blue' : 'purple'}>
-                    {selectedExpiredSession.program}
-                  </Tag>
-                </Descriptions.Item>
-              </Descriptions>
+                Close
+              </Button>
+            ]}
+          >
+            {selectedExpiredSession && (
+              <>
+                <Alert
+                  message="This session was not started at the scheduled time"
+                  type="warning"
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                />
+                
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  labelStyle={{ fontWeight: 'bold', width: '150px' }}
+                >
+                  <Descriptions.Item label="Session Title">
+                    {selectedExpiredSession.title}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Description">
+                    {selectedExpiredSession.description || 'No description provided'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Program">
+                    <Tag color={selectedExpiredSession.program === '24-session' ? 'blue' : 'purple'}>
+                      {selectedExpiredSession.program}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
 
-              <Divider orientation="left">Scheduled Timing</Divider>
+                <Divider orientation="left">Scheduled Timing</Divider>
 
-              <Descriptions
-                bordered
-                column={1}
-                size="small"
-                labelStyle={{ fontWeight: 'bold', width: '150px' }}
-              >
-                <Descriptions.Item label="Scheduled Start">
-                  {selectedExpiredSession.formattedStartTime}
-                </Descriptions.Item>
-                <Descriptions.Item label="Scheduled End">
-                  {selectedExpiredSession.formattedScheduledEndTime}
-                </Descriptions.Item>
-                <Descriptions.Item label="Duration">
-                  {formatDuration(selectedExpiredSession.duration)}
-                </Descriptions.Item>
-              </Descriptions>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  labelStyle={{ fontWeight: 'bold', width: '150px' }}
+                >
+                  <Descriptions.Item label="Scheduled Start">
+                    {selectedExpiredSession.formattedStartTime}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Scheduled End">
+                    {selectedExpiredSession.formattedScheduledEndTime}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Duration">
+                    {formatDuration(selectedExpiredSession.duration)}
+                  </Descriptions.Item>
+                </Descriptions>
 
-              <Divider orientation="left">Additional Information</Divider>
+                <Divider orientation="left">Additional Information</Divider>
 
-              <Descriptions
-                bordered
-                column={1}
-                size="small"
-                labelStyle={{ fontWeight: 'bold', width: '150px' }}
-              >
-                <Descriptions.Item label="Status">
-                  <Tag color="red">EXPIRED</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Created At">
-                  {moment(selectedExpiredSession.createdAt).format('MMMM Do YYYY, h:mm a')}
-                </Descriptions.Item>
-                <Descriptions.Item label="Last Updated">
-                  {moment(selectedExpiredSession.updatedAt).format('MMMM Do YYYY, h:mm a')}
-                </Descriptions.Item>
-              </Descriptions>
-            </>
-          )}
-        </Modal>
-      </div>
-    </div>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  labelStyle={{ fontWeight: 'bold', width: '150px' }}
+                >
+                  <Descriptions.Item label="Status">
+                    <Tag color="red">EXPIRED</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Created At">
+                    {moment(selectedExpiredSession.createdAt).format('MMMM Do YYYY, h:mm a')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Last Updated">
+                    {moment(selectedExpiredSession.updatedAt).format('MMMM Do YYYY, h:mm a')}
+                  </Descriptions.Item>
+                </Descriptions>
+              </>
+            )}
+          </Modal>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

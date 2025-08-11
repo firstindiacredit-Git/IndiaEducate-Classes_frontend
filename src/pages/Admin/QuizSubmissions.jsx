@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Card, 
-  Table, 
-  Tag, 
-  Progress, 
-  Statistic, 
+import {
+  Typography,
+  Card,
+  Table,
+  Tag,
+  Progress,
+  Statistic,
   message,
   Badge,
   Space,
@@ -15,29 +15,36 @@ import {
   Modal,
   Form,
   Input,
-  InputNumber
+  InputNumber,
+  Divider,
+  Layout
 } from 'antd';
-import { 
-  EyeOutlined, 
-  CheckCircleOutlined, 
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
   ClockCircleOutlined,
   TrophyOutlined,
   UserOutlined,
-  EditOutlined
+  EditOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import moment from 'moment';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Content } = Layout;
 
 const QuizSubmissions = () => {
   const { quizId } = useParams();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [quiz, setQuiz] = useState(null);
   const [stats, setStats] = useState({});
@@ -188,154 +195,164 @@ const QuizSubmissions = () => {
   if (!quiz) return null;
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Title level={2}>Quiz Submissions: {quiz.title}</Title>
-          <Button type="primary" onClick={() => navigate('/quiz-management')}>
-            Back to Quiz Management
-          </Button>
-        </Row>
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Title level={2}>Quiz Submissions: {quiz.title}</Title>
+            <Button type="primary" onClick={() => navigate('/quiz-management')}>
+              Back to Quiz Management
+            </Button>
+          </Row>
 
-        {/* Statistics */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Submissions"
-                value={stats.totalSubmissions || 0}
-                prefix={<UserOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Completed"
-                value={stats.completedSubmissions || 0}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Passed"
-                value={stats.passedSubmissions || 0}
-                prefix={<TrophyOutlined />}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Average Score"
-                value={Math.round(stats.averageScore || 0)}
-                suffix="%"
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
+          {/* Statistics */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Submissions"
+                  value={stats.totalSubmissions || 0}
+                  prefix={<UserOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Completed"
+                  value={stats.completedSubmissions || 0}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Passed"
+                  value={stats.passedSubmissions || 0}
+                  prefix={<TrophyOutlined />}
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Average Score"
+                  value={Math.round(stats.averageScore || 0)}
+                  suffix="%"
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+          </Row>
 
-        {/* Submissions Table */}
-        <Card title="Student Submissions" loading={loading}>
-          {submissions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <UserOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Text type="secondary">No submissions yet</Text>
-            </div>
-          ) : (
-            <Table
-              columns={columns}
-              dataSource={submissions}
-              rowKey="_id"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true
-              }}
-            />
-          )}
-        </Card>
-
-        {/* Review Modal */}
-        <Modal
-          title="Review Submission"
-          open={reviewModalVisible}
-          onCancel={() => setReviewModalVisible(false)}
-          footer={null}
-          width={600}
-        >
-          {selectedSubmission && (
-            <div>
-              <div style={{ marginBottom: 16 }}>
-                <Text strong>Student: {selectedSubmission.student.fullName}</Text>
-                <br />
-                <Text type="secondary">Score: {selectedSubmission.totalMarksObtained} / {selectedSubmission.quiz.totalMarks}</Text>
-                <br />
-                <Text type="secondary">Percentage: {selectedSubmission.percentage}%</Text>
+          {/* Submissions Table */}
+          <Card title="Student Submissions" loading={loading}>
+            {submissions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <UserOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+                <Text type="secondary">No submissions yet</Text>
               </div>
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={submissions}
+                rowKey="_id"
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true
+                }}
+              />
+            )}
+          </Card>
 
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmitReview}
-              >
-                <Form.Item
-                  name="adminScore"
-                  label="Admin Score (Optional)"
-                  rules={[
-                    {
-                      validator: (_, value) => {
-                        if (value && (value < 0 || value > selectedSubmission.quiz.totalMarks)) {
-                          return Promise.reject(`Score must be between 0 and ${selectedSubmission.quiz.totalMarks}`);
+          {/* Review Modal */}
+          <Modal
+            title="Review Submission"
+            open={reviewModalVisible}
+            onCancel={() => setReviewModalVisible(false)}
+            footer={null}
+            width={600}
+          >
+            {selectedSubmission && (
+              <div>
+                <div style={{ marginBottom: 16 }}>
+                  <Text strong>Student: {selectedSubmission.student.fullName}</Text>
+                  <br />
+                  <Text type="secondary">Score: {selectedSubmission.totalMarksObtained} / {selectedSubmission.quiz.totalMarks}</Text>
+                  <br />
+                  <Text type="secondary">Percentage: {selectedSubmission.percentage}%</Text>
+                </div>
+
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmitReview}
+                >
+                  <Form.Item
+                    name="adminScore"
+                    label="Admin Score (Optional)"
+                    rules={[
+                      {
+                        validator: (_, value) => {
+                          if (value && (value < 0 || value > selectedSubmission.quiz.totalMarks)) {
+                            return Promise.reject(`Score must be between 0 and ${selectedSubmission.quiz.totalMarks}`);
+                          }
+                          return Promise.resolve();
                         }
-                        return Promise.resolve();
                       }
-                    }
-                  ]}
-                >
-                  <InputNumber 
-                    min={0} 
-                    max={selectedSubmission.quiz.totalMarks}
-                    style={{ width: '100%' }}
-                    placeholder="Enter admin score (optional)"
-                  />
-                </Form.Item>
+                    ]}
+                  >
+                    <InputNumber 
+                      min={0} 
+                      max={selectedSubmission.quiz.totalMarks}
+                      style={{ width: '100%' }}
+                      placeholder="Enter admin score (optional)"
+                    />
+                  </Form.Item>
 
-                <Form.Item
-                  name="adminFeedback"
-                  label="Admin Feedback"
-                >
-                  <TextArea 
-                    rows={4} 
-                    placeholder="Enter feedback for the student (optional)"
-                  />
-                </Form.Item>
+                  <Form.Item
+                    name="adminFeedback"
+                    label="Admin Feedback"
+                  >
+                    <TextArea 
+                      rows={4} 
+                      placeholder="Enter feedback for the student (optional)"
+                    />
+                  </Form.Item>
 
-                <Form.Item>
-                  <Space>
-                    <Button type="primary" htmlType="submit">
-                      Submit Review
-                    </Button>
-                    <Button onClick={() => setReviewModalVisible(false)}>
-                      Cancel
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
-            </div>
-          )}
-        </Modal>
-      </div>
-    </div>
+                  <Form.Item>
+                    <Space>
+                      <Button type="primary" htmlType="submit">
+                        Submit Review
+                      </Button>
+                      <Button onClick={() => setReviewModalVisible(false)}>
+                        Cancel
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </Form>
+              </div>
+            )}
+          </Modal>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

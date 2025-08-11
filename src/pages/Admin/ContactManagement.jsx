@@ -13,7 +13,8 @@ import {
   Col,
   Statistic,
   Pagination,
-  Alert
+  Alert,
+  Layout
 } from 'antd';
 import { 
   ArrowLeftOutlined,
@@ -23,15 +24,18 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
+const { Content } = Layout;
 
 const ContactManagement = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({});
@@ -161,34 +165,43 @@ const ContactManagement = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1400, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-        <Space align="center">
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space align="center">
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
+              />
+              <Title level={2} style={{ margin: 0 }}>Contact Management</Title>
+            </Space>
+            <Button 
+              icon={<ReloadOutlined />} 
+              onClick={() => {
+                fetchContacts();
+                fetchStats();
               }}
-            />
-            <Title level={2} style={{ margin: 0 }}>Contact Management</Title>
-          </Space>
-          <Button 
-            icon={<ReloadOutlined />} 
-            onClick={() => {
-              fetchContacts();
-              fetchStats();
-            }}
-          >
-            Refresh
-          </Button>
-        </Row>
+            >
+              Refresh
+            </Button>
+          </Row>
 
         {/* Statistics */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -421,8 +434,9 @@ const ContactManagement = () => {
         </Modal>
 
 
-      </div>
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

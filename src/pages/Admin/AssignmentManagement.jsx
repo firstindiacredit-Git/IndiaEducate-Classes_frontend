@@ -20,7 +20,8 @@ import {
   Statistic,
   Progress,
   Badge,
-  Switch
+  Switch,
+  Layout
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -37,6 +38,7 @@ import {
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import moment from 'moment';
@@ -44,10 +46,12 @@ import moment from 'moment';
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+const { Content } = Layout;
 
 const AssignmentManagement = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   
   // Helper function to get default dates
   const getDefaultDates = () => {
@@ -317,326 +321,336 @@ const AssignmentManagement = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/admin-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
+        
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Space align="center">
+              <Button
+                type="link"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/admin-dashboard')}
+                style={{
+                  fontSize: '16px',
+                  marginRight: '8px',
+                  padding: 0
+                }}
+              />
+              <Title level={2} style={{ margin: 0 }}>Assignment Management</Title>
+            </Space>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingAssignment(null);
+                form.resetFields();
+                setModalVisible(true);
+              }}
+            >
+              Create Assignment
+            </Button>
+          </Row>
+
+          {/* Statistics Cards */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Assignments"
+                  value={stats.totalAssignments}
+                  prefix={<TrophyOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Active Assignments"
+                  value={stats.activeAssignments}
+                  prefix={<CheckCircleOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Published Assignments"
+                  value={stats.publishedAssignments}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Total Submissions"
+                  value={stats.totalSubmissions}
+                  prefix={<UserOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Assignments Table */}
+          <Card title="All Assignments" loading={loading}>
+            <Table
+              columns={columns}
+              dataSource={assignments}
+              rowKey="_id"
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true
               }}
             />
-            <Title level={2} style={{ margin: 0 }}>Assignment Management</Title>
-          </Space>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => {
+          </Card>
+
+          {/* Create/Edit Assignment Modal */}
+          <Modal
+            title={editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+            open={modalVisible}
+            onCancel={() => {
+              setModalVisible(false);
               setEditingAssignment(null);
               form.resetFields();
-              setModalVisible(true);
             }}
+            footer={null}
+            width={800}
           >
-            Create Assignment
-          </Button>
-        </Row>
-
-        {/* Statistics Cards */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Assignments"
-                value={stats.totalAssignments}
-                prefix={<TrophyOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Active Assignments"
-                value={stats.activeAssignments}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Published Assignments"
-                value={stats.publishedAssignments}
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Submissions"
-                value={stats.totalSubmissions}
-                prefix={<UserOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Assignments Table */}
-        <Card title="All Assignments" loading={loading}>
-          <Table
-            columns={columns}
-            dataSource={assignments}
-            rowKey="_id"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true
-            }}
-          />
-        </Card>
-
-        {/* Create/Edit Assignment Modal */}
-        <Modal
-          title={editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
-          open={modalVisible}
-          onCancel={() => {
-            setModalVisible(false);
-            setEditingAssignment(null);
-            form.resetFields();
-          }}
-          footer={null}
-          width={800}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleCreateAssignment}
-            initialValues={{
-              type: 'audio',
-              subject: 'english',
-              language: 'english',
-              duration: 5,
-              maxFileSize: 100,
-              totalMarks: 100,
-              passingMarks: 40,
-              rubric: {
-                pronunciation: 25,
-                fluency: 25,
-                clarity: 25,
-                expression: 25
-              },
-              ...getDefaultDates()
-            }}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="title"
-                  label="Assignment Title"
-                  rules={[{ required: true, message: 'Please enter assignment title' }]}
-                >
-                  <Input placeholder="Enter assignment title" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="type"
-                  label="Assignment Type"
-                  rules={[{ required: true, message: 'Please select assignment type' }]}
-                >
-                  <Select>
-                    <Option value="audio">Audio Recording</Option>
-                    <Option value="video">Video Recording</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item
-              name="description"
-              label="Description"
-              rules={[{ required: true, message: 'Please enter description' }]}
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleCreateAssignment}
+              initialValues={{
+                type: 'audio',
+                subject: 'english',
+                language: 'english',
+                duration: 5,
+                maxFileSize: 100,
+                totalMarks: 100,
+                passingMarks: 40,
+                rubric: {
+                  pronunciation: 25,
+                  fluency: 25,
+                  clarity: 25,
+                  expression: 25
+                },
+                ...getDefaultDates()
+              }}
             >
-              <TextArea rows={3} placeholder="Enter assignment description" />
-            </Form.Item>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="title"
+                    label="Assignment Title"
+                    rules={[{ required: true, message: 'Please enter assignment title' }]}
+                  >
+                    <Input placeholder="Enter assignment title" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="type"
+                    label="Assignment Type"
+                    rules={[{ required: true, message: 'Please select assignment type' }]}
+                  >
+                    <Select>
+                      <Option value="audio">Audio Recording</Option>
+                      <Option value="video">Video Recording</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Form.Item
-              name="paragraph"
-              label="Paragraph to Read"
-              rules={[{ required: true, message: 'Please enter paragraph for students to read' }]}
-            >
-              <TextArea rows={6} placeholder="Enter the paragraph that students need to read and record..." />
-            </Form.Item>
+              <Form.Item
+                name="description"
+                label="Description"
+                rules={[{ required: true, message: 'Please enter description' }]}
+              >
+                <TextArea rows={3} placeholder="Enter assignment description" />
+              </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="subject"
-                  label="Subject"
-                  rules={[{ required: true, message: 'Please select subject' }]}
-                >
-                  <Select>
-                    <Option value="english">English</Option>
-                    <Option value="hindi">Hindi</Option>
-                    <Option value="mathematics">Mathematics</Option>
-                    <Option value="science">Science</Option>
-                    <Option value="social_studies">Social Studies</Option>
-                    <Option value="general_knowledge">General Knowledge</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="language"
-                  label="Language"
-                  rules={[{ required: true, message: 'Please select language' }]}
-                >
-                  <Select>
-                    <Option value="english">English</Option>
-                    <Option value="hindi">Hindi</Option>
-                    <Option value="both">Both</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="duration"
-                  label="Duration (minutes)"
-                  rules={[{ required: true, message: 'Please enter duration' }]}
-                >
-                  <InputNumber min={1} max={60} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
+              <Form.Item
+                name="paragraph"
+                label="Paragraph to Read"
+                rules={[{ required: true, message: 'Please enter paragraph for students to read' }]}
+              >
+                <TextArea rows={6} placeholder="Enter the paragraph that students need to read and record..." />
+              </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="maxFileSize"
-                  label="Max File Size (MB)"
-                  rules={[{ required: true, message: 'Please enter max file size' }]}
-                >
-                  <InputNumber min={1} max={500} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="totalMarks"
-                  label="Total Marks"
-                  rules={[{ required: true, message: 'Please enter total marks' }]}
-                >
-                  <InputNumber min={1} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="passingMarks"
-                  label="Passing Marks"
-                  rules={[{ required: true, message: 'Please enter passing marks' }]}
-                >
-                  <InputNumber min={1} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item
+                    name="subject"
+                    label="Subject"
+                    rules={[{ required: true, message: 'Please select subject' }]}
+                  >
+                    <Select>
+                      <Option value="english">English</Option>
+                      <Option value="hindi">Hindi</Option>
+                      <Option value="mathematics">Mathematics</Option>
+                      <Option value="science">Science</Option>
+                      <Option value="social_studies">Social Studies</Option>
+                      <Option value="general_knowledge">General Knowledge</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="language"
+                    label="Language"
+                    rules={[{ required: true, message: 'Please select language' }]}
+                  >
+                    <Select>
+                      <Option value="english">English</Option>
+                      <Option value="hindi">Hindi</Option>
+                      <Option value="both">Both</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="duration"
+                    label="Duration (minutes)"
+                    rules={[{ required: true, message: 'Please enter duration' }]}
+                  >
+                    <InputNumber min={1} max={60} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="startDate"
-                  label="Start Date"
-                  rules={[{ required: true, message: 'Please select start date' }]}
-                >
-                  <DatePicker showTime style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="endDate"
-                  label="End Date"
-                  rules={[{ required: true, message: 'Please select end date' }]}
-                >
-                  <DatePicker showTime style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item
+                    name="maxFileSize"
+                    label="Max File Size (MB)"
+                    rules={[{ required: true, message: 'Please enter max file size' }]}
+                  >
+                    <InputNumber min={1} max={500} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="totalMarks"
+                    label="Total Marks"
+                    rules={[{ required: true, message: 'Please enter total marks' }]}
+                  >
+                    <InputNumber min={1} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="passingMarks"
+                    label="Passing Marks"
+                    rules={[{ required: true, message: 'Please enter passing marks' }]}
+                  >
+                    <InputNumber min={1} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Form.Item
-              name="instructions"
-              label="Instructions (Optional)"
-            >
-              <TextArea rows={3} placeholder="Enter additional instructions for students..." />
-            </Form.Item>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="startDate"
+                    label="Start Date"
+                    rules={[{ required: true, message: 'Please select start date' }]}
+                  >
+                    <DatePicker showTime style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="endDate"
+                    label="End Date"
+                    rules={[{ required: true, message: 'Please select end date' }]}
+                  >
+                    <DatePicker showTime style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Divider>Evaluation Rubric</Divider>
-            
-            <Row gutter={16}>
-              <Col span={6}>
-                <Form.Item
-                  name={['rubric', 'pronunciation']}
-                  label="Pronunciation (25)"
-                  rules={[{ required: true, message: 'Please enter pronunciation marks' }]}
-                >
-                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item
-                  name={['rubric', 'fluency']}
-                  label="Fluency (25)"
-                  rules={[{ required: true, message: 'Please enter fluency marks' }]}
-                >
-                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item
-                  name={['rubric', 'clarity']}
-                  label="Clarity (25)"
-                  rules={[{ required: true, message: 'Please enter clarity marks' }]}
-                >
-                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item
-                  name={['rubric', 'expression']}
-                  label="Expression (25)"
-                  rules={[{ required: true, message: 'Please enter expression marks' }]}
-                >
-                  <InputNumber min={0} max={25} style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
+              <Form.Item
+                name="instructions"
+                label="Instructions (Optional)"
+              >
+                <TextArea rows={3} placeholder="Enter additional instructions for students..." />
+              </Form.Item>
 
-            <Form.Item>
-              <Space>
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
-                </Button>
-                <Button onClick={() => {
-                  setModalVisible(false);
-                  setEditingAssignment(null);
-                  form.resetFields();
-                }}>
-                  Cancel
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
-      </div>
-    </div>
+              <Divider>Evaluation Rubric</Divider>
+              
+              <Row gutter={16}>
+                <Col span={6}>
+                  <Form.Item
+                    name={['rubric', 'pronunciation']}
+                    label="Pronunciation (25)"
+                    rules={[{ required: true, message: 'Please enter pronunciation marks' }]}
+                  >
+                    <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={6}>
+                  <Form.Item
+                    name={['rubric', 'fluency']}
+                    label="Fluency (25)"
+                    rules={[{ required: true, message: 'Please enter fluency marks' }]}
+                  >
+                    <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={6}>
+                  <Form.Item
+                    name={['rubric', 'clarity']}
+                    label="Clarity (25)"
+                    rules={[{ required: true, message: 'Please enter clarity marks' }]}
+                  >
+                    <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={6}>
+                  <Form.Item
+                    name={['rubric', 'expression']}
+                    label="Expression (25)"
+                    rules={[{ required: true, message: 'Please enter expression marks' }]}
+                  >
+                    <InputNumber min={0} max={25} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item>
+                <Space>
+                  <Button type="primary" htmlType="submit" loading={loading}>
+                    {editingAssignment ? 'Update Assignment' : 'Create Assignment'}
+                  </Button>
+                  <Button onClick={() => {
+                    setModalVisible(false);
+                    setEditingAssignment(null);
+                    form.resetFields();
+                  }}>
+                    Cancel
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

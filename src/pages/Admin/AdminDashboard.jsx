@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Row, Col, Statistic, message, Button, Modal, Form, Input, DatePicker, Select, Alert } from 'antd';
+import { Typography, Card, Row, Col, Statistic, message, Button, Modal, Form, Input, DatePicker, Select, Alert, Layout } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../component/AuthProvider';
 import AdminNavbar from './AdminNavbar';
+import AdminSidebar from './AdminSidebar';
 import axios from 'axios';
 import moment from 'moment';
 import {
@@ -23,10 +24,12 @@ import {
 
 const { Title } = Typography;
 const { Option } = Select;
+const { Content } = Layout;
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [stats, setStats] = useState({
     totalStudents: 0,
     activeCourses: 0,
@@ -250,390 +253,400 @@ const AdminDashboard = () => {
 
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <AdminNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Title level={2}>Dashboard Overview</Title>
-          <Button 
-            type="primary" 
-            icon={<VideoCameraOutlined />}
-            onClick={() => setScheduleModalVisible(true)}
-          >
-            Schedule Class
-          </Button>
-        </Row>
+      <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <AdminNavbar />
         
-        <Row gutter={[24, 24]}>
-          {/* Existing stat cards */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card hoverable onClick={() => navigate('/student-management')} style={{ cursor: 'pointer' }} loading={loading}>
-              <Statistic
-                title="Total Students"
-                value={stats.totalStudents}
-                prefix={<UserOutlined style={{ color: '#3f8600' }} />}
-                valueStyle={{ color: '#3f8600' }}
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={12} lg={6}>
-            <Card loading={loading}>
-              <Statistic
-                title="Active Courses"
-                value={stats.activeCourses}
-                prefix={<BookOutlined style={{ color: '#1890ff' }} />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              loading={loading}
-              onClick={() => navigate('/completed-sessions')}
-              style={{ cursor: 'pointer' }}
+        <Content style={{ 
+          margin: '24px 16px', 
+          padding: 24, 
+          background: '#fff',
+          borderRadius: '8px',
+          minHeight: 'calc(100vh - 112px)'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+            <Title level={2}>Dashboard Overview</Title>
+            <Button 
+              type="primary" 
+              icon={<VideoCameraOutlined />}
+              onClick={() => setScheduleModalVisible(true)}
             >
-              <Statistic
-                title="Completed Sessions"
-                value={completedSessionsCount}
-                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
+              Schedule Class
+            </Button>
+          </Row>
+          
+          <Row gutter={[24, 24]}>
+            {/* Existing stat cards */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card hoverable onClick={() => navigate('/student-management')} style={{ cursor: 'pointer' }} loading={loading}>
+                <Statistic
+                  title="Total Students"
+                  value={stats.totalStudents}
+                  prefix={<UserOutlined style={{ color: '#3f8600' }} />}
+                  valueStyle={{ color: '#3f8600' }}
+                />
+              </Card>
+            </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              loading={loading}
-              onClick={() => navigate('/upcoming-sessions')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Upcoming Sessions"
-                value={upcomingClasses.length}
-                prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card loading={loading}>
+                <Statistic
+                  title="Active Courses"
+                  value={stats.activeCourses}
+                  prefix={<BookOutlined style={{ color: '#1890ff' }} />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Add Expired Sessions Card */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              loading={loading}
-              onClick={() => navigate('/expired-sessions')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Expired Sessions"
-                value={expiredSessionsCount}
-                prefix={<WarningOutlined style={{ color: '#ff4d4f' }} />}
-                valueStyle={{ color: '#ff4d4f' }}
-              />
-            </Card>
-          </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                loading={loading}
+                onClick={() => navigate('/completed-sessions')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Completed Sessions"
+                  value={completedSessionsCount}
+                  prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Active Connections Monitoring */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              style={{ 
-                borderColor: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a',
-                borderWidth: '2px'
-              }}
-            >
-              <Statistic
-                title="Active Connections"
-                value={activeConnections}
-                prefix={<TeamOutlined style={{ 
-                  color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
-                }} />}
-                valueStyle={{ 
-                  color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                loading={loading}
+                onClick={() => navigate('/upcoming-sessions')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Upcoming Sessions"
+                  value={upcomingClasses.length}
+                  prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+                  valueStyle={{ color: '#faad14' }}
+                />
+              </Card>
+            </Col>
+
+            {/* Add Expired Sessions Card */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                loading={loading}
+                onClick={() => navigate('/expired-sessions')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Expired Sessions"
+                  value={expiredSessionsCount}
+                  prefix={<WarningOutlined style={{ color: '#ff4d4f' }} />}
+                  valueStyle={{ color: '#ff4d4f' }}
+                />
+              </Card>
+            </Col>
+
+            {/* Active Connections Monitoring */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                style={{ 
+                  borderColor: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a',
+                  borderWidth: '2px'
                 }}
-                suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
-              />
-            </Card>
-          </Col>
+              >
+                <Statistic
+                  title="Active Connections"
+                  value={activeConnections}
+                  prefix={<TeamOutlined style={{ 
+                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                  }} />}
+                  valueStyle={{ 
+                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                  }}
+                  suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
+                />
+              </Card>
+            </Col>
 
-          {/* File Upload Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/file-upload')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="File Management"
-                value="Upload & Manage"
-                prefix={<UploadOutlined style={{ color: '#722ed1' }} />}
-                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* File Upload Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/file-upload')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="File Management"
+                  value="Upload & Manage"
+                  prefix={<UploadOutlined style={{ color: '#722ed1' }} />}
+                  valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Quiz Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/quiz-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Quiz Management"
-                value="Create & Manage"
-                prefix={<BookOutlined style={{ color: '#13c2c2' }} />}
-                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* Quiz Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/quiz-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Quiz Management"
+                  value="Create & Manage"
+                  prefix={<BookOutlined style={{ color: '#13c2c2' }} />}
+                  valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Assignment Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/assignment-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Assignment Management"
-                value="Speaking Tasks"
-                prefix={<VideoCameraOutlined style={{ color: '#722ed1' }} />}
-                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* Assignment Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/assignment-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Assignment Management"
+                  value="Speaking Tasks"
+                  prefix={<VideoCameraOutlined style={{ color: '#722ed1' }} />}
+                  valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Certificate Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/certificate-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Certificate Management"
-                value="Approve & Manage"
-                prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
-                valueStyle={{ color: '#faad14', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* Certificate Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/certificate-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Certificate Management"
+                  value="Approve & Manage"
+                  prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
+                  valueStyle={{ color: '#faad14', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Ticket Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/ticket-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Ticket Management"
-                value="Support & Issues"
-                prefix={<MessageOutlined style={{ color: '#13c2c2' }} />}
-                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* Ticket Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/ticket-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Ticket Management"
+                  value="Support & Issues"
+                  prefix={<MessageOutlined style={{ color: '#13c2c2' }} />}
+                  valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Contact Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/contact-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="Contact Management"
-                value="Contact Forms"
-                prefix={<MailOutlined style={{ color: '#722ed1' }} />}
-                valueStyle={{ color: '#722ed1', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* Contact Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/contact-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Contact Management"
+                  value="Contact Forms"
+                  prefix={<MailOutlined style={{ color: '#722ed1' }} />}
+                  valueStyle={{ color: '#722ed1', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* FAQ Management */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              hoverable
-              onClick={() => navigate('/faq-management')}
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic
-                title="FAQ Management"
-                value="Help & Support"
-                prefix={<QuestionCircleOutlined style={{ color: '#13c2c2' }} />}
-                valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
-              />
-            </Card>
-          </Col>
+            {/* FAQ Management */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                hoverable
+                onClick={() => navigate('/faq-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="FAQ Management"
+                  value="Help & Support"
+                  prefix={<QuestionCircleOutlined style={{ color: '#13c2c2' }} />}
+                  valueStyle={{ color: '#13c2c2', fontSize: '14px' }}
+                />
+              </Card>
+            </Col>
 
-          {/* Connection Issues */}
-          <Col xs={24} sm={12} lg={6}>
-            <Card 
-              style={{ 
-                borderColor: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a',
-                borderWidth: '2px'
-              }}
-            >
-              <Statistic
-                title="Connection Issues"
-                value={connectionIssues.length}
-                prefix={<ExclamationCircleOutlined style={{ 
-                  color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
-                }} />}
-                valueStyle={{ 
-                  color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
+            {/* Connection Issues */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card 
+                style={{ 
+                  borderColor: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a',
+                  borderWidth: '2px'
                 }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Connection Issues Alert */}
-        {connectionIssues.length > 0 && (
-          <Row style={{ marginTop: 16 }}>
-            <Col span={24}>
-              <Alert
-                message="Connection Issues Detected"
-                description={
-                  <div>
-                    {connectionIssues.map((issue, index) => (
-                      <div key={index} style={{ marginBottom: 8 }}>
-                        <strong>{issue.className}:</strong> {issue.issue}
-                        {issue.activeStudents && ` (${issue.activeStudents} students)`}
-                        {issue.stuckStudents && ` (${issue.stuckStudents} stuck students)`}
-                      </div>
-                    ))}
-                  </div>
-                }
-                type="warning"
-                showIcon
-                closable
-                style={{ marginBottom: 16 }}
-              />
+              >
+                <Statistic
+                  title="Connection Issues"
+                  value={connectionIssues.length}
+                  prefix={<ExclamationCircleOutlined style={{ 
+                    color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
+                  }} />}
+                  valueStyle={{ 
+                    color: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a' 
+                  }}
+                />
+              </Card>
             </Col>
           </Row>
-        )}
-        
-        {/* Schedule Class Modal */}
-        <Modal
-          title="Schedule New Class"
-          open={scheduleModalVisible}
-          onCancel={() => {
-            setScheduleModalVisible(false);
-            form.resetFields();
-          }}
-          footer={null}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleScheduleClass}
-            initialValues={{
-              duration: 60,
-              program: '24-session'
+
+          {/* Connection Issues Alert */}
+          {connectionIssues.length > 0 && (
+            <Row style={{ marginTop: 16 }}>
+              <Col span={24}>
+                <Alert
+                  message="Connection Issues Detected"
+                  description={
+                    <div>
+                      {connectionIssues.map((issue, index) => (
+                        <div key={index} style={{ marginBottom: 8 }}>
+                          <strong>{issue.className}:</strong> {issue.issue}
+                          {issue.activeStudents && ` (${issue.activeStudents} students)`}
+                          {issue.stuckStudents && ` (${issue.stuckStudents} stuck students)`}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                  type="warning"
+                  showIcon
+                  closable
+                  style={{ marginBottom: 16 }}
+                />
+              </Col>
+            </Row>
+          )}
+          
+          {/* Schedule Class Modal */}
+          <Modal
+            title="Schedule New Class"
+            open={scheduleModalVisible}
+            onCancel={() => {
+              setScheduleModalVisible(false);
+              form.resetFields();
             }}
+            footer={null}
           >
-            <Form.Item
-              name="title"
-              label="Class Title"
-              rules={[{ required: true, message: 'Please enter class title' }]}
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleScheduleClass}
+              initialValues={{
+                duration: 60,
+                program: '24-session'
+              }}
             >
-              <Input placeholder="Enter class title" />
-            </Form.Item>
+              <Form.Item
+                name="title"
+                label="Class Title"
+                rules={[{ required: true, message: 'Please enter class title' }]}
+              >
+                <Input placeholder="Enter class title" />
+              </Form.Item>
 
-            <Form.Item
-              name="description"
-              label="Description"
-            >
-              <Input.TextArea placeholder="Enter class description" />
-            </Form.Item>
+              <Form.Item
+                name="description"
+                label="Description"
+              >
+                <Input.TextArea placeholder="Enter class description" />
+              </Form.Item>
 
-            <Form.Item
-              name="startTime"
-              label="Start Time"
-              rules={[
-                { required: true, message: 'Please select start time' },
-                {
-                  validator: (_, value) => {
-                    if (value && value.toDate() < new Date()) {
-                      return Promise.reject('Cannot schedule class in the past');
-                    }
-                    return Promise.resolve();
-                  }
-                }
-              ]}
-            >
-              <DatePicker
-                showTime
-                format="YYYY-MM-DD HH:mm"
-                disabledDate={(current) => current && current < moment().startOf('day')}
-                disabledTime={(current) => {
-                  if (current && current.isSame(moment(), 'day')) {
-                    return {
-                      disabledHours: () => Array.from({ length: moment().hour() }, (_, i) => i),
-                      disabledMinutes: (hour) => {
-                        if (hour === moment().hour()) {
-                          return Array.from({ length: moment().minute() }, (_, i) => i);
-                        }
-                        return [];
+              <Form.Item
+                name="startTime"
+                label="Start Time"
+                rules={[
+                  { required: true, message: 'Please select start time' },
+                  {
+                    validator: (_, value) => {
+                      if (value && value.toDate() < new Date()) {
+                        return Promise.reject('Cannot schedule class in the past');
                       }
-                    };
-                  }
-                  return {};
-                }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="duration"
-              label="Duration (minutes)"
-              rules={[
-                { required: true, message: 'Please enter duration' },
-                { 
-                  validator: async (_, value) => {
-                    const duration = parseInt(value);
-                    if (isNaN(duration) || duration < 5 || duration > 180) {
-                      throw new Error('Duration must be between 5 and 180 minutes');
+                      return Promise.resolve();
                     }
                   }
-                }
-              ]}
-            >
-              <Input 
-                type="number" 
-                min={5} 
-                max={180} 
-                placeholder="Enter duration in minutes"
-              />
-            </Form.Item>
+                ]}
+              >
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  disabledDate={(current) => current && current < moment().startOf('day')}
+                  disabledTime={(current) => {
+                    if (current && current.isSame(moment(), 'day')) {
+                      return {
+                        disabledHours: () => Array.from({ length: moment().hour() }, (_, i) => i),
+                        disabledMinutes: (hour) => {
+                          if (hour === moment().hour()) {
+                            return Array.from({ length: moment().minute() }, (_, i) => i);
+                          }
+                          return [];
+                        }
+                      };
+                    }
+                    return {};
+                  }}
+                />
+              </Form.Item>
 
-            <Form.Item
-              name="program"
-              label="Program"
-              rules={[{ required: true, message: 'Please select program' }]}
-            >
-              <Select placeholder="Select program">
-                <Option value="24-session">24 Session Program</Option>
-                <Option value="48-session">48 Session Program</Option>
-              </Select>
-            </Form.Item>
+              <Form.Item
+                name="duration"
+                label="Duration (minutes)"
+                rules={[
+                  { required: true, message: 'Please enter duration' },
+                  { 
+                    validator: async (_, value) => {
+                      const duration = parseInt(value);
+                      if (isNaN(duration) || duration < 5 || duration > 180) {
+                        throw new Error('Duration must be between 5 and 180 minutes');
+                      }
+                    }
+                  }
+                ]}
+              >
+                <Input 
+                  type="number" 
+                  min={5} 
+                  max={180} 
+                  placeholder="Enter duration in minutes"
+                />
+              </Form.Item>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block loading={scheduleLoading}>
-                Schedule Class
-              </Button>
-            </Form.Item>
-          </Form>
-        </Modal>
+              <Form.Item
+                name="program"
+                label="Program"
+                rules={[{ required: true, message: 'Please select program' }]}
+              >
+                <Select placeholder="Select program">
+                  <Option value="24-session">24 Session Program</Option>
+                  <Option value="48-session">48 Session Program</Option>
+                </Select>
+              </Form.Item>
 
-      </div>
-    </div>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" block loading={scheduleLoading}>
+                  Schedule Class
+                </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 
