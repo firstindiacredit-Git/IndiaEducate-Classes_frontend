@@ -291,17 +291,6 @@ const AdminDashboard = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card loading={loading}>
-                <Statistic
-                  title="Active Courses"
-                  value={stats.activeCourses}
-                  prefix={<BookOutlined style={{ color: '#1890ff' }} />}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-
-            <Col xs={24} sm={12} lg={6}>
               <Card 
                 hoverable
                 loading={loading}
