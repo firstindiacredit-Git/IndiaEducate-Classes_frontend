@@ -83,7 +83,7 @@ const AdminDashboard = () => {
     try {
       // console.log('Fetching upcoming classes...');
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/upcoming/all`);
-      
+
       // Check if any active class has ended
       if (activeClass) {
         const status = checkClassStatus(activeClass);
@@ -157,7 +157,7 @@ const AdminDashboard = () => {
       try {
         // Get all ongoing classes
         const ongoingClasses = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/classes/ongoing`);
-        
+
         let totalConnections = 0;
         const issues = [];
 
@@ -178,9 +178,9 @@ const AdminDashboard = () => {
           }
 
           // Check for students who joined but haven't left (potential crash victims)
-          const stuckStudents = attendance.data.attendance.filter(a => 
-            a.status === 'partial' && 
-            !a.leaveTime && 
+          const stuckStudents = attendance.data.attendance.filter(a =>
+            a.status === 'partial' &&
+            !a.leaveTime &&
             new Date() - new Date(a.joinTime) > 30 * 60 * 1000 // More than 30 minutes
           );
 
@@ -213,7 +213,7 @@ const AdminDashboard = () => {
   const handleScheduleClass = async (values) => {
     try {
       setScheduleLoading(true);
-      
+
       if (!profile?._id) {
         message.error('Admin ID not found. Please try logging in again.');
         return;
@@ -237,7 +237,7 @@ const AdminDashboard = () => {
 
       const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/classes/create`, payload);
       // console.log('Class scheduled response:', response.data);
-      
+
       message.success('Class scheduled successfully');
       setScheduleModalVisible(false);
       form.resetFields();
@@ -255,28 +255,28 @@ const AdminDashboard = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      
+
       <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
         <AdminNavbar />
-        
-        <Content style={{ 
-          margin: '24px 16px', 
-          padding: 24, 
+
+        <Content style={{
+          margin: '24px 16px',
+          padding: 24,
           background: '#fff',
           borderRadius: '8px',
           minHeight: 'calc(100vh - 112px)'
         }}>
           <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
             <Title level={2}>Dashboard Overview</Title>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<VideoCameraOutlined />}
               onClick={() => setScheduleModalVisible(true)}
             >
               Schedule Class
             </Button>
           </Row>
-          
+
           <Row gutter={[24, 24]}>
             {/* Existing stat cards */}
             <Col xs={24} sm={12} lg={6}>
@@ -291,7 +291,7 @@ const AdminDashboard = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card 
+              <Card
                 hoverable
                 loading={loading}
                 onClick={() => navigate('/completed-sessions')}
@@ -307,7 +307,7 @@ const AdminDashboard = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card 
+              <Card
                 hoverable
                 loading={loading}
                 onClick={() => navigate('/upcoming-sessions')}
@@ -324,7 +324,7 @@ const AdminDashboard = () => {
 
             {/* Add Expired Sessions Card */}
             <Col xs={24} sm={12} lg={6}>
-              <Card 
+              <Card
                 hoverable
                 loading={loading}
                 onClick={() => navigate('/expired-sessions')}
@@ -339,27 +339,6 @@ const AdminDashboard = () => {
               </Card>
             </Col>
 
-            {/* Active Connections Monitoring */}
-            <Col xs={24} sm={12} lg={6}>
-              <Card 
-                style={{ 
-                  borderColor: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a',
-                  borderWidth: '2px'
-                }}
-              >
-                <Statistic
-                  title="Active Connections"
-                  value={activeConnections}
-                  prefix={<TeamOutlined style={{ 
-                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
-                  }} />}
-                  valueStyle={{ 
-                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
-                  }}
-                  suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
-                />
-              </Card>
-            </Col>
 
             {/* File Upload Management */}
             {/* <Col xs={24} sm={12} lg={6}>
@@ -473,8 +452,29 @@ const AdminDashboard = () => {
               </Card>
             </Col> */}
 
+            {/* Active Connections Monitoring */}
+            {/* <Col xs={24} sm={12} lg={6}>
+              <Card 
+                style={{ 
+                  borderColor: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a',
+                  borderWidth: '2px'
+                }}
+              >
+                <Statistic
+                  title="Active Connections"
+                  value={activeConnections}
+                  prefix={<TeamOutlined style={{ 
+                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                  }} />}
+                  valueStyle={{ 
+                    color: activeConnections > 50 ? '#ff4d4f' : activeConnections > 30 ? '#faad14' : '#52c41a' 
+                  }}
+                  suffix={activeConnections > 50 ? '⚠️' : activeConnections > 30 ? '⚡' : ''}
+                />
+              </Card>
+            </Col> */}
             {/* Connection Issues */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card 
                 style={{ 
                   borderColor: connectionIssues.length > 0 ? '#ff4d4f' : '#52c41a',
@@ -492,7 +492,7 @@ const AdminDashboard = () => {
                   }}
                 />
               </Card>
-            </Col>
+            </Col> */}
           </Row>
 
           {/* Connection Issues Alert */}
@@ -520,7 +520,7 @@ const AdminDashboard = () => {
               </Col>
             </Row>
           )}
-          
+
           {/* Schedule Class Modal */}
           <Modal
             title="Schedule New Class"
@@ -596,7 +596,7 @@ const AdminDashboard = () => {
                 label="Duration (minutes)"
                 rules={[
                   { required: true, message: 'Please enter duration' },
-                  { 
+                  {
                     validator: async (_, value) => {
                       const duration = parseInt(value);
                       if (isNaN(duration) || duration < 5 || duration > 180) {
@@ -606,10 +606,10 @@ const AdminDashboard = () => {
                   }
                 ]}
               >
-                <Input 
-                  type="number" 
-                  min={5} 
-                  max={180} 
+                <Input
+                  type="number"
+                  min={5}
+                  max={180}
                   placeholder="Enter duration in minutes"
                 />
               </Form.Item>
