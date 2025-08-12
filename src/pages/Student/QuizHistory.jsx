@@ -11,7 +11,8 @@ import {
   Space,
   Row,
   Col,
-  Button
+  Button,
+  Layout
 } from 'antd';
 import { 
   HistoryOutlined, 
@@ -20,7 +21,6 @@ import {
   TrophyOutlined,
   EyeOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -28,13 +28,14 @@ import moment from 'moment';
 import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
+const { Content } = Layout;
 
 const QuizHistory = () => {
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   // Fetch quiz history
   const fetchHistory = async () => {
     try {
@@ -44,7 +45,7 @@ const QuizHistory = () => {
         params: { studentEmailOrPhone: emailOrPhone }
       });
       setSubmissions(response.data);
-    } catch (err) {
+    } catch {
       message.error('Failed to fetch quiz history');
     } finally {
       setLoading(false);
@@ -65,15 +66,6 @@ const QuizHistory = () => {
       general_knowledge: 'magenta'
     };
     return colors[subject] || 'default';
-  };
-
-  const getTypeColor = (type) => {
-    const colors = {
-      weekly_test: 'red',
-      assignment: 'blue',
-      practice_quiz: 'green'
-    };
-    return colors[type] || 'default';
   };
 
   const getStatusBadge = (submission) => {
@@ -176,128 +168,148 @@ const QuizHistory = () => {
   const stats = getStats();
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <StudentNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
       <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      <div style={{ maxWidth: '100%', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Title level={2}>Quiz History</Title>
-          <Button type="primary" onClick={() => navigate('/quiz-dashboard')}>
-            Back to Dashboard
-          </Button>
-        </Row>
-
-        {/* Statistics */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Attempts"
-                value={stats.totalAttempts}
-                prefix={<HistoryOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Completed"
-                value={stats.completedAttempts}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Passed"
-                value={stats.passedAttempts}
-                prefix={<TrophyOutlined />}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Success Rate"
-                value={stats.successRate}
-                suffix="%"
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* History Table */}
-        <Card title="Quiz Attempts" loading={loading}>
-          {submissions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <HistoryOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Text type="secondary">No quiz attempts yet</Text>
-            </div>
-          ) : (
-            <Table
-              columns={columns}
-              dataSource={submissions}
-              rowKey="_id"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true
-              }}
-            />
-          )}
-        </Card>
-
-        {/* Performance by Subject */}
-        {submissions.length > 0 && (
-          <Card title="Performance by Subject" style={{ marginTop: 16 }}>
-            <Row gutter={[16, 16]}>
-              {Object.entries(
-                submissions
-                  .filter(s => s.status === 'completed')
-                  .reduce((acc, submission) => {
-                    const subject = submission.quiz.subject;
-                    if (!acc[subject]) {
-                      acc[subject] = { total: 0, passed: 0, totalScore: 0, maxScore: 0 };
-                    }
-                    acc[subject].total++;
-                    acc[subject].totalScore += submission.totalMarksObtained;
-                    acc[subject].maxScore += submission.quiz.totalMarks;
-                    if (submission.isPassed) acc[subject].passed++;
-                    return acc;
-                  }, {})
-              ).map(([subject, stats]) => (
-                <Col xs={24} sm={12} lg={8} key={subject}>
-                  <Card size="small">
-                    <div style={{ textAlign: 'center' }}>
-                      <Tag color={getSubjectColor(subject)} style={{ marginBottom: 8 }}>
-                        {subject.replace('_', ' ').toUpperCase()}
-                      </Tag>
-                      <div style={{ marginBottom: 8 }}>
-                        <Progress 
-                          type="circle" 
-                          size="small" 
-                          percent={Math.round((stats.totalScore / stats.maxScore) * 100)} 
-                          format={percent => `${percent}%`}
-                        />
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        {stats.passed}/{stats.total} passed
-                      </div>
-                    </div>
-                  </Card>
-                </Col>
-              ))}
+      
+      <Layout style={{ 
+        marginLeft: sidebarCollapsed ? 80 : 250,
+        transition: 'margin-left 0.2s ease'
+      }}>
+        <StudentNavbar />
+        
+        <Content style={{ 
+          padding: '24px',
+          background: '#f5f5f5',
+          minHeight: 'calc(100vh - 64px)'
+        }}>
+          <div style={{ 
+            maxWidth: '100%', 
+            margin: '0 auto',
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+              <Title level={2}>Quiz History</Title>
+              <Button type="primary" onClick={() => navigate('/quiz-dashboard')}>
+                Back to Dashboard
+              </Button>
             </Row>
-          </Card>
-        )}
-      </div>
-    </div>
+
+            {/* Statistics */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Total Attempts"
+                    value={stats.totalAttempts}
+                    prefix={<HistoryOutlined />}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Completed"
+                    value={stats.completedAttempts}
+                    prefix={<CheckCircleOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Passed"
+                    value={stats.passedAttempts}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Success Rate"
+                    value={stats.successRate}
+                    suffix="%"
+                    prefix={<ClockCircleOutlined />}
+                    valueStyle={{ color: '#722ed1' }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            {/* History Table */}
+            <Card title="Quiz Attempts" loading={loading}>
+              {submissions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <HistoryOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+                  <Text type="secondary">No quiz attempts yet</Text>
+                </div>
+              ) : (
+                <Table
+                  columns={columns}
+                  dataSource={submissions}
+                  rowKey="_id"
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true
+                  }}
+                />
+              )}
+            </Card>
+
+            {/* Performance by Subject */}
+            {submissions.length > 0 && (
+              <Card title="Performance by Subject" style={{ marginTop: 16 }}>
+                <Row gutter={[16, 16]}>
+                  {Object.entries(
+                    submissions
+                      .filter(s => s.status === 'completed')
+                      .reduce((acc, submission) => {
+                        const subject = submission.quiz.subject;
+                        if (!acc[subject]) {
+                          acc[subject] = { total: 0, passed: 0, totalScore: 0, maxScore: 0 };
+                        }
+                        acc[subject].total++;
+                        acc[subject].totalScore += submission.totalMarksObtained;
+                        acc[subject].maxScore += submission.quiz.totalMarks;
+                        if (submission.isPassed) acc[subject].passed++;
+                        return acc;
+                      }, {})
+                  ).map(([subject, stats]) => (
+                    <Col xs={24} sm={12} lg={8} key={subject}>
+                      <Card size="small">
+                        <div style={{ textAlign: 'center' }}>
+                          <Tag color={getSubjectColor(subject)} style={{ marginBottom: 8 }}>
+                            {subject.replace('_', ' ').toUpperCase()}
+                          </Tag>
+                          <div style={{ marginBottom: 8 }}>
+                            <Progress 
+                              type="circle" 
+                              size="small" 
+                              percent={Math.round((stats.totalScore / stats.maxScore) * 100)} 
+                              format={percent => `${percent}%`}
+                            />
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {stats.passed}/{stats.total} passed
+                          </div>
+                        </div>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </Card>
+            )}
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

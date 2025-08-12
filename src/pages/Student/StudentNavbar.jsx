@@ -389,19 +389,19 @@ const StudentNavbar = () => {
         <div style={{ 
             width: '100%', 
             backgroundColor: '#fff', 
-            // boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             position: 'sticky',
             top: 0,
-            zIndex: 1000
+            zIndex: 1000,
+            height: '64px'
         }}>
             <Row 
                 justify="space-between" 
                 align="middle" 
                 style={{ 
                     padding: '12px 24px',
-                    maxWidth: '1200px',
-                    margin: '0 auto',
-                    width: '100%'
+                    width: '100%',
+                    height: '100%'
                 }}
             >
                 <Col>

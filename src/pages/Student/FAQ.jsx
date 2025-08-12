@@ -13,7 +13,8 @@ import {
   Alert,
   Empty,
   Spin,
-  message
+  message,
+  Layout
 } from 'antd';
 import {
   SearchOutlined,
@@ -29,22 +30,23 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentSidebar from './StudentSidebar';
+
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
 const { Panel } = Collapse;
+const { Content } = Layout;
 
 const FAQ = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [adminFAQs, setAdminFAQs] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [activeKey, setActiveKey] = useState([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   // Default FAQ categories and questions
   const defaultFAQs = {
     'General Questions': [
@@ -228,14 +230,11 @@ const FAQ = () => {
   // Fetch admin-added FAQs
   const fetchAdminFAQs = async () => {
     try {
-      setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/faq/admin-faqs`);
       setAdminFAQs(response.data.faqs || []);
     } catch (err) {
       console.error('Error fetching admin FAQs:', err);
       // Don't show error message as admin FAQs are optional
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -317,196 +316,216 @@ const FAQ = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <StudentNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
       <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/student-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
-            />
-            <Title level={2} style={{ margin: 0 }}>
-              <QuestionCircleOutlined style={{ marginRight: '8px' }} />
-              Frequently Asked Questions
-            </Title>
-          </Space>
-        </Row>
-
-        {/* Search Bar */}
-        <Card style={{ marginBottom: 24 }}>
-          <Search
-            placeholder="Search for questions or answers..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ maxWidth: 600 }}
-          />
-        </Card>
-
-        {/* Admin FAQs Section */}
-        {filteredAdminFAQs.length > 0 && (
-          <Card 
-            title={
-              <Space>
-                <StarOutlined style={{ color: '#faad14' }} />
-                <span>Important Updates & Announcements</span>
+      
+      <Layout style={{ 
+        marginLeft: sidebarCollapsed ? 80 : 250,
+        transition: 'margin-left 0.2s ease'
+      }}>
+        <StudentNavbar />
+        
+        <Content style={{ 
+          padding: '24px',
+          background: '#f5f5f5',
+          minHeight: 'calc(100vh - 64px)'
+        }}>
+          <div style={{ 
+            maxWidth: '100%', 
+            margin: '0 auto',
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+              <Space align="center">
+                <Button
+                  type="link"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => navigate('/student-dashboard')}
+                  style={{
+                    fontSize: '16px',
+                    marginRight: '8px',
+                    padding: 0
+                  }}
+                />
+                <Title level={2} style={{ margin: 0 }}>
+                  <QuestionCircleOutlined style={{ marginRight: '8px' }} />
+                  Frequently Asked Questions
+                </Title>
               </Space>
-            }
-            style={{ marginBottom: 24 }}
-            extra={
-              <Tag color="gold" icon={<StarOutlined />}>
-                Admin Added
-              </Tag>
-            }
-          >
-            <Alert
-              message="Latest Information"
-              description="These FAQs are added by administrators and contain the most up-to-date information about our platform."
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-            
-            <Collapse 
-              activeKey={activeKey}
-              onChange={setActiveKey}
-              expandIconPosition="end"
-            >
-              {filteredAdminFAQs.map((faq, index) => (
-                <Panel
-                  key={`admin-${index}`}
-                  header={
-                    <Space>
-                      <StarOutlined style={{ color: '#faad14' }} />
-                      <Text strong>{faq.question}</Text>
-                    </Space>
-                  }
-                >
-                                     <Paragraph style={{ marginBottom: 0 }}>
-                     {faq.answer}
-                   </Paragraph>
-                   <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     {faq.category && (
-                       <Tag color={getCategoryColor(faq.category)} icon={getCategoryIcon(faq.category)}>
-                         {faq.category.charAt(0).toUpperCase() + faq.category.slice(1)}
-                       </Tag>
-                     )}
-                     <Button
-                       type="link"
-                       size="small"
-                       icon={<StarOutlined />}
-                       onClick={() => markAsHelpful(faq._id)}
-                     >
-                       Helpful ({faq.helpfulCount || 0})
-                     </Button>
-                   </div>
-                </Panel>
-              ))}
-            </Collapse>
-          </Card>
-        )}
+            </Row>
 
-        {/* Default FAQs */}
-        {Object.keys(filteredDefaultFAQs).length > 0 ? (
-          <Row gutter={[24, 24]}>
-            {Object.entries(filteredDefaultFAQs).map(([category, questions]) => (
-              <Col xs={24} lg={12} key={category}>
-                <Card
-                  title={
-                    <Space>
-                      {getCategoryIcon(questions[0]?.category)}
-                      <span>{category}</span>
-                      <Tag color={getCategoryColor(questions[0]?.category)}>
-                        {questions.length} Q&A
-                      </Tag>
-                    </Space>
-                  }
-                  style={{ height: '100%' }}
+            {/* Search Bar */}
+            <Card style={{ marginBottom: 24 }}>
+              <Search
+                placeholder="Search for questions or answers..."
+                allowClear
+                enterButton={<SearchOutlined />}
+                size="large"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ maxWidth: 600 }}
+              />
+            </Card>
+
+            {/* Admin FAQs Section */}
+            {filteredAdminFAQs.length > 0 && (
+              <Card 
+                title={
+                  <Space>
+                    <StarOutlined style={{ color: '#faad14' }} />
+                    <span>Important Updates & Announcements</span>
+                  </Space>
+                }
+                style={{ marginBottom: 24 }}
+                extra={
+                  <Tag color="gold" icon={<StarOutlined />}>
+                    Admin Added
+                  </Tag>
+                }
+              >
+                <Alert
+                  message="Latest Information"
+                  description="These FAQs are added by administrators and contain the most up-to-date information about our platform."
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                />
+                
+                <Collapse 
+                  activeKey={activeKey}
+                  onChange={setActiveKey}
+                  expandIconPosition="end"
                 >
-                  <Collapse 
-                    activeKey={activeKey}
-                    onChange={setActiveKey}
-                    expandIconPosition="end"
-                    size="small"
-                  >
-                    {questions.map((faq, index) => (
-                      <Panel
-                        key={`${category}-${index}`}
-                        header={
-                          <Text style={{ fontSize: '14px' }}>
-                            {faq.question}
-                          </Text>
-                        }
+                  {filteredAdminFAQs.map((faq, index) => (
+                    <Panel
+                      key={`admin-${index}`}
+                      header={
+                        <Space>
+                          <StarOutlined style={{ color: '#faad14' }} />
+                          <Text strong>{faq.question}</Text>
+                        </Space>
+                      }
+                    >
+                      <Paragraph style={{ marginBottom: 0 }}>
+                        {faq.answer}
+                      </Paragraph>
+                      <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {faq.category && (
+                          <Tag color={getCategoryColor(faq.category)} icon={getCategoryIcon(faq.category)}>
+                            {faq.category.charAt(0).toUpperCase() + faq.category.slice(1)}
+                          </Tag>
+                        )}
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<StarOutlined />}
+                          onClick={() => markAsHelpful(faq._id)}
+                        >
+                          Helpful ({faq.helpfulCount || 0})
+                        </Button>
+                      </div>
+                    </Panel>
+                  ))}
+                </Collapse>
+              </Card>
+            )}
+
+            {/* Default FAQs */}
+            {Object.keys(filteredDefaultFAQs).length > 0 ? (
+              <Row gutter={[24, 24]}>
+                {Object.entries(filteredDefaultFAQs).map(([category, questions]) => (
+                  <Col xs={24} lg={12} key={category}>
+                    <Card
+                      title={
+                        <Space>
+                          {getCategoryIcon(questions[0]?.category)}
+                          <span>{category}</span>
+                          <Tag color={getCategoryColor(questions[0]?.category)}>
+                            {questions.length} Q&A
+                          </Tag>
+                        </Space>
+                      }
+                      style={{ height: '100%' }}
+                    >
+                      <Collapse 
+                        activeKey={activeKey}
+                        onChange={setActiveKey}
+                        expandIconPosition="end"
+                        size="small"
                       >
-                        <Paragraph style={{ marginBottom: 0, fontSize: '13px' }}>
-                          {faq.answer}
-                        </Paragraph>
-                      </Panel>
-                    ))}
-                  </Collapse>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        ) : (
-          <Card>
-            <Empty
-              description={
-                <div>
-                  <Text>No FAQs found matching your search.</Text>
-                  <br />
-                  <Text type="secondary">Try different keywords or browse all categories.</Text>
-                </div>
-              }
-            />
-          </Card>
-        )}
+                        {questions.map((faq, index) => (
+                          <Panel
+                            key={`${category}-${index}`}
+                            header={
+                              <Text style={{ fontSize: '14px' }}>
+                                {faq.question}
+                              </Text>
+                            }
+                          >
+                            <Paragraph style={{ marginBottom: 0, fontSize: '13px' }}>
+                              {faq.answer}
+                            </Paragraph>
+                          </Panel>
+                        ))}
+                      </Collapse>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            ) : (
+              <Card>
+                <Empty
+                  description={
+                    <div>
+                      <Text>No FAQs found matching your search.</Text>
+                      <br />
+                      <Text type="secondary">Try different keywords or browse all categories.</Text>
+                    </div>
+                  }
+                />
+              </Card>
+            )}
 
-        {/* Quick Actions */}
-        <Card title="Need More Help?" style={{ marginTop: 24 }}>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Button
-                type="primary"
-                icon={<QuestionCircleOutlined />}
-                onClick={() => navigate('/help-center')}
-                block
-              >
-                Raise Support Ticket
-              </Button>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Button
-                icon={<ClockCircleOutlined />}
-                onClick={() => navigate('/contact-us')}
-                block
-              >
-                Contact Support
-              </Button>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Button
-                icon={<CheckCircleOutlined />}
-                onClick={() => navigate('/student-dashboard')}
-                block
-              >
-                Back to Dashboard
-              </Button>
-            </Col>
-          </Row>
-        </Card>
-      </div>
-    </div>
+            {/* Quick Actions */}
+            <Card title="Need More Help?" style={{ marginTop: 24 }}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={8}>
+                  <Button
+                    type="primary"
+                    icon={<QuestionCircleOutlined />}
+                    onClick={() => navigate('/help-center')}
+                    block
+                  >
+                    Raise Support Ticket
+                  </Button>
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Button
+                    icon={<ClockCircleOutlined />}
+                    onClick={() => navigate('/contact-us')}
+                    block
+                  >
+                    Contact Support
+                  </Button>
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Button
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => navigate('/student-dashboard')}
+                    block
+                  >
+                    Back to Dashboard
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 
