@@ -30,6 +30,7 @@ import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
 
@@ -40,7 +41,7 @@ const AssignmentDashboard = () => {
   const [performance, setPerformance] = useState({});
   const [loading, setLoading] = useState(false);
   const [performanceLoading, setPerformanceLoading] = useState(false);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Fetch available assignments
   const fetchAssignments = async () => {
     try {
@@ -131,10 +132,10 @@ const AssignmentDashboard = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       <StudentNavbar />
-
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Space align="center">
             <Button
