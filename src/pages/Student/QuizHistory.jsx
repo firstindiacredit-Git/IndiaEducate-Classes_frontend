@@ -25,6 +25,7 @@ import StudentNavbar from './StudentNavbar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import moment from 'moment';
+import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
 
@@ -33,7 +34,7 @@ const QuizHistory = () => {
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Fetch quiz history
   const fetchHistory = async () => {
     try {
@@ -177,8 +178,8 @@ const QuizHistory = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
-      
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div style={{ maxWidth: '100%', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Title level={2}>Quiz History</Title>
           <Button type="primary" onClick={() => navigate('/quiz-dashboard')}>

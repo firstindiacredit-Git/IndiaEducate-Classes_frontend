@@ -28,6 +28,7 @@ import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
 
@@ -38,7 +39,7 @@ const QuizDashboard = () => {
   const [performance, setPerformance] = useState({});
   const [loading, setLoading] = useState(false);
   const [performanceLoading, setPerformanceLoading] = useState(false);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Fetch available quizzes
   const fetchQuizzes = async () => {
     try {
@@ -121,6 +122,7 @@ const QuizDashboard = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
       <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>

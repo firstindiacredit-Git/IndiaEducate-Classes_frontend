@@ -36,6 +36,7 @@ import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
+import StudentSidebar from './StudentSidebar';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -50,7 +51,7 @@ const HelpCenter = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [fileList, setFileList] = useState([]);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Fetch student's tickets
   const fetchTickets = async () => {
     try {
@@ -232,9 +233,9 @@ const HelpCenter = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
-      
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+        <Row justify="space-between" align="middle"  style={{ marginBottom: 24 }}>
           <Space align="center">
             <Button
               type="link"

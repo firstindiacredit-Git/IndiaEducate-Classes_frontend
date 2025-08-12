@@ -26,18 +26,16 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
+import StudentSidebar from './StudentSidebar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import moment from 'moment';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const TakeQuiz = () => {
   const { quizId } = useParams();
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const [quiz, setQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -47,7 +45,7 @@ const TakeQuiz = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState(null);
-  const [startTime, setStartTime] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Fetch quiz details
   const fetchQuiz = async () => {
@@ -59,7 +57,6 @@ const TakeQuiz = () => {
       });
       setQuiz(response.data);
       setTimeLeft(response.data.duration * 60); // Convert to seconds
-      setStartTime(new Date());
     } catch (err) {
       message.error(err.response?.data?.message || 'Failed to load quiz');
       navigate('/quiz-dashboard');
@@ -142,7 +139,6 @@ const TakeQuiz = () => {
 
   const renderQuestion = (question, index) => {
     const isCurrentQuestion = index === currentQuestion;
-    const isAnswered = answers[index] !== undefined;
 
     if (!isCurrentQuestion) return null;
 
@@ -209,7 +205,7 @@ const TakeQuiz = () => {
   const renderQuestionNavigation = () => {
     return (
       <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', marginBottom: 16, minWidth: '100%' }}>
           <Button 
             icon={<ArrowLeftOutlined />} 
             onClick={handlePrevQuestion}
@@ -253,9 +249,19 @@ const TakeQuiz = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh' }}>
+      <div style={{ minHeight: '100vh', minWidth: '100%' }}>
         <StudentNavbar />
-        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+        <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            padding: '100px 20px',
+            marginLeft: sidebarCollapsed ? '80px' : '250px',
+            transition: 'margin-left 0.2s ease',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
           <Text>Loading quiz...</Text>
         </div>
       </div>
@@ -266,7 +272,18 @@ const TakeQuiz = () => {
     return (
       <div style={{ minHeight: '100vh' }}>
         <StudentNavbar />
-        <div style={{ maxWidth: 800, margin: '50px auto', padding: '0 24px' }}>
+        <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+        <div 
+          style={{ 
+            maxWidth: 800, 
+            margin: '50px auto', 
+            padding: '0 24px',
+            marginLeft: sidebarCollapsed ? '80px' : '250px',
+            transition: 'margin-left 0.2s ease',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
           <Result
             status={result.isPassed ? 'success' : 'error'}
             title={result.isPassed ? 'Congratulations! You passed!' : 'Quiz completed'}
@@ -316,8 +333,19 @@ const TakeQuiz = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
-      <div style={{ maxWidth: 1000, margin: '24px auto', padding: '0 24px' }}>
+      <div 
+        style={{ 
+          maxWidth: 1000, 
+          margin: '24px auto', 
+          padding: '0 24px',
+          marginLeft: sidebarCollapsed ? '80px' : '250px',
+          transition: 'margin-left 0.2s ease',
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5'
+        }}
+      >
         {/* Quiz Header */}
         <Card style={{ marginBottom: 16 }}>
           <Row justify="space-between" align="middle">

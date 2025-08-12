@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
+import { Layout, Typography, Card, Button, Row, Col, Progress, Space, Table, Tag, message, Empty, Divider, Modal, Tooltip } from 'antd';
 import { useAuth } from '../../component/AuthProvider';
 import { useSocket } from '../../component/SocketProvider';
 import { useNavigate } from 'react-router-dom';
@@ -22,12 +22,13 @@ import {
   MessageOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
+import StudentSidebar from './StudentSidebar';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
 
 // Custom Calendar Component
-const CustomCalendar = ({ classes, onDateClick, profile }) => {
+const CustomCalendar = ({ classes, profile }) => {
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -228,7 +229,6 @@ const CustomCalendar = ({ classes, onDateClick, profile }) => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {calendarDays.map((day, index) => {
             const isCurrentMonth = day.isSame(currentMonth, 'month');
-            const status = getDateStatus(day);
             const hasClasses = getClassesForDate(day).length > 0;
 
             return (
@@ -405,7 +405,7 @@ const CustomCalendar = ({ classes, onDateClick, profile }) => {
 
 const StudentDashboard = () => {
   const { profile } = useAuth();
-  const { socket, isConnected } = useSocket();
+  const { socket } = useSocket();
   const navigate = useNavigate();
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [activeClass, setActiveClass] = useState(null);
@@ -420,12 +420,8 @@ const StudentDashboard = () => {
   const [allClasses, setAllClasses] = useState([]);
   const [countdownKey, setCountdownKey] = useState(0);
   const [progressData, setProgressData] = useState(null);
-  const [progressLoading, setProgressLoading] = useState(false);
-  const [assignmentsModalVisible, setAssignmentsModalVisible] = useState(false);
-  const [quizzesModalVisible, setQuizzesModalVisible] = useState(false);
-  const [liveClassesModalVisible, setLiveClassesModalVisible] = useState(false);
-  const [progressTrackingModalVisible, setProgressTrackingModalVisible] = useState(false);
   const [detailedProgressData, setDetailedProgressData] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const firstName = profile?.fullName?.split(' ')[0] || 'Student';
 
   // Fetch upcoming classes
@@ -495,7 +491,6 @@ const StudentDashboard = () => {
   // Fetch overall progress data
   const fetchProgressData = async () => {
     try {
-      setProgressLoading(true);
       const emailOrPhone = localStorage.getItem('studentEmailOrPhone');
       const [progressResponse, detailedResponse] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BASE_URL}/api/student/assignments/progress`, {
@@ -510,8 +505,6 @@ const StudentDashboard = () => {
     } catch (err) {
       console.error('Error fetching progress data:', err);
       message.error('Failed to load progress data');
-    } finally {
-      setProgressLoading(false);
     }
   };
 
@@ -709,7 +702,7 @@ const StudentDashboard = () => {
       const isReconnect = joinedClasses.includes(classData._id);
 
       // Record join time or handle reconnection
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/join`, {
         classId: classData._id,
         studentId: profile._id,
         isReconnect
@@ -774,7 +767,7 @@ const StudentDashboard = () => {
   // Handle reconnection
   const handleReconnect = async (classData) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/reconnect`, {
+      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/attendance/reconnect`, {
         classId: classData._id,
         studentId: profile._id
       });
@@ -813,7 +806,8 @@ const StudentDashboard = () => {
     }
   };
 
-  const classColumns = [
+  // Table columns for class display (unused but kept for potential future use)
+  const _classColumns = [
     {
       title: 'Title',
       dataIndex: 'title',
@@ -857,9 +851,11 @@ const StudentDashboard = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <StudentNavbar />
-      <div style={{ padding: '24px 40px' }}>
+    <Layout style={{ minHeight: '100vh' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <Layout style={{ marginLeft: sidebarCollapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
+        <StudentNavbar />
+        <div style={{ padding: '24px 40px' }}>
         <Title level={2}>
           Welcome, {firstName}
           {detailedProgressData?.badges && detailedProgressData.badges.length > 0 && (
@@ -1637,10 +1633,9 @@ const StudentDashboard = () => {
             <Empty description="No classes available" />
           )}
         </Modal>
-
-
-      </div>
-    </div>
+        </div>
+      </Layout>
+    </Layout>
   );
 };
 

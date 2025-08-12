@@ -30,7 +30,7 @@ import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import StudentSidebar from './StudentSidebar';
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -40,7 +40,7 @@ const ContactUs = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Office details
   const officeDetails = {
     address: "India Educates, Greater Kailash-1, Block R, Greater Kailash I, Greater Kailash, New Delhi, Delhi 110019",
@@ -87,8 +87,8 @@ const ContactUs = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
-
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
         {/* Header */}
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Space align="center">

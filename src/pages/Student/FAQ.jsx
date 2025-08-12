@@ -33,19 +33,18 @@ import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import StudentSidebar from './StudentSidebar';
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
 const { Panel } = Collapse;
 
 const FAQ = () => {
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [adminFAQs, setAdminFAQs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeKey, setActiveKey] = useState([]);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Default FAQ categories and questions
   const defaultFAQs = {
     'General Questions': [
@@ -320,8 +319,8 @@ const FAQ = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
-      
-      <div style={{ maxWidth: 1200, margin: '24px auto', padding: '0 24px' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Space align="center">
             <Button

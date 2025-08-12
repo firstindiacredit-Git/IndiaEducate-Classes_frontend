@@ -16,7 +16,6 @@ import {
   Statistic,
   Modal,
 } from 'antd';
-import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import axios from 'axios';
 import {
@@ -34,11 +33,11 @@ import {
   ArrowLeftOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
 
 const ProgressTracking = () => {
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +45,7 @@ const ProgressTracking = () => {
   const [assignmentsModalVisible, setAssignmentsModalVisible] = useState(false);
   const [quizzesModalVisible, setQuizzesModalVisible] = useState(false);
   const [liveClassesModalVisible, setLiveClassesModalVisible] = useState(false);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);  
   const fetchProgressData = async () => {
     try {
       setLoading(true);
@@ -142,7 +141,6 @@ const ProgressTracking = () => {
 
   const getMotivationalMessage = (progressData) => {
     const progress = progressData.overall.progressPercentage;
-    const badges = progressData.achievements.totalBadges;
     
     if (progress >= 90) {
       return {
@@ -207,7 +205,17 @@ const ProgressTracking = () => {
     return (
       <div style={{ minHeight: '100vh' }}>
         <StudentNavbar />
-        <div style={{ padding: '24px 40px', textAlign: 'center' }}>
+        <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+        <div 
+          style={{ 
+            padding: '24px 40px', 
+            textAlign: 'center',
+            marginLeft: sidebarCollapsed ? '80px' : '250px',
+            transition: 'margin-left 0.2s ease',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
           <Title level={2}>Loading Progress...</Title>
         </div>
       </div>
@@ -217,7 +225,16 @@ const ProgressTracking = () => {
   return (
     <div style={{ minHeight: '100vh' }}>
       <StudentNavbar />
-      <div style={{ padding: '24px 40px' }}>
+      <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div 
+        style={{ 
+          padding: '24px 40px',
+          marginLeft: sidebarCollapsed ? '80px' : '250px',
+          transition: 'margin-left 0.2s ease',
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5'
+        }}
+      >
         {/* Header */}
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
@@ -468,7 +485,7 @@ const ProgressTracking = () => {
               {/* Badges Display */}
               {filteredBadges.length > 0 ? (
                 <Row gutter={[16, 16]}>
-                  {filteredBadges.map((badge, index) => (
+                  {filteredBadges.map((badge) => (
                     <Col xs={24} sm={12} md={8} lg={6} key={badge.id}>
                       <Card
                         size="small"
