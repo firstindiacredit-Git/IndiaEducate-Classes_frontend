@@ -12,7 +12,8 @@ import {
   Row,
   Col,
   Button,
-  Modal
+  Modal,
+  Layout
 } from 'antd';
 import { 
   HistoryOutlined, 
@@ -24,7 +25,6 @@ import {
   VideoCameraOutlined,
   PlayCircleOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../component/AuthProvider';
 import StudentNavbar from './StudentNavbar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -32,9 +32,9 @@ import moment from 'moment';
 import StudentSidebar from './StudentSidebar';
 
 const { Title, Text } = Typography;
+const { Content } = Layout;
 
 const AssignmentHistory = () => {
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,7 @@ const AssignmentHistory = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [selectedMediaType, setSelectedMediaType] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   // Fetch assignment history
   const fetchHistory = async () => {
     try {
@@ -51,7 +52,7 @@ const AssignmentHistory = () => {
         params: { studentEmailOrPhone: emailOrPhone }
       });
       setSubmissions(response.data);
-    } catch (err) {
+    } catch {
       message.error('Failed to fetch assignment history');
     } finally {
       setLoading(false);
@@ -61,18 +62,6 @@ const AssignmentHistory = () => {
   useEffect(() => {
     fetchHistory();
   }, []);
-
-  const getSubjectColor = (subject) => {
-    const colors = {
-      english: 'blue',
-      hindi: 'green',
-      mathematics: 'orange',
-      science: 'purple',
-      social_studies: 'cyan',
-      general_knowledge: 'magenta'
-    };
-    return colors[subject] || 'default';
-  };
 
   const getTypeIcon = (type) => {
     return type === 'audio' ? <AudioOutlined /> : <VideoCameraOutlined />;
@@ -206,174 +195,194 @@ const AssignmentHistory = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <StudentNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
       <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        {/* Header */}
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <div>
-            <Title level={2} style={{ margin: 0 }}>
-              Assignment History
-            </Title>
-            <Text type="secondary">
-              View all your assignment submissions and results
-            </Text>
-          </div>
-          <Button onClick={() => navigate('/assignment-dashboard')}>
-            Back to Dashboard
-          </Button>
-        </Row>
-
-        {/* Statistics */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Total Submissions"
-                value={stats.total}
-                prefix={<HistoryOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Reviewed"
-                value={stats.reviewed}
-                prefix={<CheckCircleOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Passed"
-                value={stats.passed}
-                prefix={<TrophyOutlined />}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Average Score"
-                value={Math.round(stats.averageScore)}
-                suffix="%"
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Submissions Table */}
-        <Card title="All Submissions" loading={loading}>
-          {submissions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <HistoryOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Text type="secondary">No assignment submissions found</Text>
-            </div>
-          ) : (
-            <Table
-              columns={columns}
-              dataSource={submissions}
-              rowKey="_id"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true
-              }}
-            />
-          )}
-        </Card>
-
-        {/* Media Modal */}
-        <Modal
-          title={`Play ${selectedMediaType === 'audio' ? 'Audio' : 'Video'} Submission`}
-          open={mediaModalVisible}
-          onCancel={() => {
-            setMediaModalVisible(false);
-            setSelectedMedia(null);
-            setSelectedMediaType(null);
-          }}
-          footer={null}
-          width={700}
-        >
-          {selectedMedia && selectedMediaType && (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <div style={{ marginBottom: '16px' }}>
+      
+      <Layout style={{ 
+        marginLeft: sidebarCollapsed ? 80 : 250,
+        transition: 'margin-left 0.2s ease'
+      }}>
+        <StudentNavbar />
+        
+        <Content style={{ 
+          padding: '24px',
+          background: '#f5f5f5',
+          minHeight: 'calc(100vh - 64px)'
+        }}>
+          <div style={{ 
+            maxWidth: '100%', 
+            margin: '0 auto',
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            {/* Header */}
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+              <div>
+                <Title level={2} style={{ margin: 0 }}>
+                  Assignment History
+                </Title>
                 <Text type="secondary">
-                  {selectedMediaType === 'audio' ? 'Audio' : 'Video'} Recording
+                  View all your assignment submissions and results
                 </Text>
               </div>
-              
-              {selectedMediaType === 'audio' ? (
-                <div>
-                  <audio 
-                    controls 
-                    style={{ width: '100%', height: '60px' }}
-                  >
-                    <source src={selectedMedia} type="audio/webm" />
-                    <source src={selectedMedia} type="audio/mpeg" />
-                    <source src={selectedMedia} type="audio/wav" />
-                    <source src={selectedMedia} type="audio/mp4" />
-                    Your browser does not support the audio element.
-                  </audio>
+              <Button onClick={() => navigate('/assignment-dashboard')}>
+                Back to Dashboard
+              </Button>
+            </Row>
+
+            {/* Statistics */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Total Submissions"
+                    value={stats.total}
+                    prefix={<HistoryOutlined />}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Reviewed"
+                    value={stats.reviewed}
+                    prefix={<CheckCircleOutlined />}
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Passed"
+                    value={stats.passed}
+                    prefix={<TrophyOutlined />}
+                    valueStyle={{ color: '#faad14' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} lg={6}>
+                <Card>
+                  <Statistic
+                    title="Average Score"
+                    value={Math.round(stats.averageScore)}
+                    suffix="%"
+                    prefix={<ClockCircleOutlined />}
+                    valueStyle={{ color: '#722ed1' }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Submissions Table */}
+            <Card title="All Submissions" loading={loading}>
+              {submissions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <HistoryOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+                  <Text type="secondary">No assignment submissions found</Text>
                 </div>
               ) : (
-                <div>
-                  <video 
-                    controls 
-                    style={{ width: '100%', maxHeight: '400px', border: '1px solid #d9d9d9' }}
-                  >
-                    <source src={selectedMedia} type="video/webm" />
-                    <source src={selectedMedia} type="video/mp4" />
-                    <source src={selectedMedia} type="video/avi" />
-                    Your browser does not support the video element.
-                  </video>
+                <Table
+                  columns={columns}
+                  dataSource={submissions}
+                  rowKey="_id"
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true
+                  }}
+                />
+              )}
+            </Card>
+
+            {/* Media Modal */}
+            <Modal
+              title={`Play ${selectedMediaType === 'audio' ? 'Audio' : 'Video'} Submission`}
+              open={mediaModalVisible}
+              onCancel={() => {
+                setMediaModalVisible(false);
+                setSelectedMedia(null);
+                setSelectedMediaType(null);
+              }}
+              footer={null}
+              width={700}
+            >
+              {selectedMedia && selectedMediaType && (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <Text type="secondary">
+                      {selectedMediaType === 'audio' ? 'Audio' : 'Video'} Recording
+                    </Text>
+                  </div>
+                  
+                  {selectedMediaType === 'audio' ? (
+                    <div>
+                      <audio 
+                        controls 
+                        style={{ width: '100%', height: '60px' }}
+                      >
+                        <source src={selectedMedia} type="audio/webm" />
+                        <source src={selectedMedia} type="audio/mpeg" />
+                        <source src={selectedMedia} type="audio/wav" />
+                        <source src={selectedMedia} type="audio/mp4" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  ) : (
+                    <div>
+                      <video 
+                        controls 
+                        style={{ width: '100%', maxHeight: '400px', border: '1px solid #d9d9d9' }}
+                      >
+                        <source src={selectedMedia} type="video/webm" />
+                        <source src={selectedMedia} type="video/mp4" />
+                        <source src={selectedMedia} type="video/avi" />
+                        Your browser does not support the video element.
+                      </video>
+                    </div>
+                  )}
+                  
+                  <div style={{ marginTop: '16px' }}>
+                    <Space>
+                      <Button 
+                        type="primary" 
+                        onClick={() => {
+                          setMediaModalVisible(false);
+                          setSelectedMedia(null);
+                          setSelectedMediaType(null);
+                        }}
+                      >
+                        Close
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => window.open(selectedMedia, '_blank')}
+                      >
+                        Open in New Tab
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = selectedMedia;
+                          link.download = `submission.${selectedMediaType === 'audio' ? 'webm' : 'mp4'}`;
+                          link.click();
+                        }}
+                      >
+                        Download
+                      </Button>
+                    </Space>
+                  </div>
                 </div>
               )}
-              
-              <div style={{ marginTop: '16px' }}>
-                <Space>
-                  <Button 
-                    type="primary" 
-                    onClick={() => {
-                      setMediaModalVisible(false);
-                      setSelectedMedia(null);
-                      setSelectedMediaType(null);
-                    }}
-                  >
-                    Close
-                  </Button>
-                  <Button 
-                    type="default"
-                    onClick={() => window.open(selectedMedia, '_blank')}
-                  >
-                    Open in New Tab
-                  </Button>
-                  <Button 
-                    type="default"
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = selectedMedia;
-                      link.download = `submission.${selectedMediaType === 'audio' ? 'webm' : 'mp4'}`;
-                      link.click();
-                    }}
-                  >
-                    Download
-                  </Button>
-                </Space>
-              </div>
-            </div>
-          )}
-        </Modal>
-      </div>
-    </div>
+            </Modal>
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

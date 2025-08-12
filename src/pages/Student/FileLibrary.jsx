@@ -31,15 +31,18 @@ import {
   Tabs,
   Empty,
   Spin,
-  Typography
+  Typography,
+  Layout
 } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
 import StudentSidebar from './StudentSidebar';
+
 const { Option } = Select;
 const { TabPane } = Tabs;
 const { Title } = Typography;
+const { Content } = Layout;
 
 const FileLibrary = () => {
   const navigate = useNavigate();
@@ -70,6 +73,7 @@ const FileLibrary = () => {
     return tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'all';
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
   // Get student credentials from localStorage userProfile
   const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
   const studentEmailOrPhone = userProfile?.email || userProfile?.phone;
@@ -326,150 +330,169 @@ const FileLibrary = () => {
   );
 
   return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <StudentNavbar />
+    <Layout style={{ minHeight: '100vh' }}>
       <StudentSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      <div style={{ maxWidth: '1900px', margin: '24px auto', padding: '0 24px', marginLeft: sidebarCollapsed ? '80px' : '250px', transition: 'margin-left 0.2s ease', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Space align="center">
-            <Button
-              type="link"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/student-dashboard')}
-              style={{
-                fontSize: '16px',
-                marginRight: '8px',
-                padding: 0
-              }}
-            />
-            <Title level={2} style={{ margin: 0 }}>File Library</Title>
-          </Space>
-        </Row>
-
-        {/* Tabs */}
-        <Tabs activeKey={activeTab} onChange={(key) => {
-          setActiveTab(key);
-          setSearchParams({ tab: key });
+      
+      <Layout style={{ 
+        marginLeft: sidebarCollapsed ? 80 : 250,
+        transition: 'margin-left 0.2s ease'
+      }}>
+        <StudentNavbar />
+        
+        <Content style={{ 
+          padding: '24px',
+          background: '#f5f5f5',
+          minHeight: 'calc(100vh - 64px)'
         }}>
-          <TabPane tab="All Files" key="all" />
-          <TabPane tab="PDFs" key="pdf" />
-          <TabPane tab="Videos" key="video" />
-          <TabPane tab="Audio" key="audio" />
-          <TabPane tab="Images" key="image" />
-        </Tabs>
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <Input
-              placeholder="Search files..."
-              prefix={<Search className="w-4 h-4" />}
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              style={{ width: 200 }}
-            />
-            <Select
-              placeholder="File Type"
-              value={filters.fileType}
-              onChange={(value) => setFilters(prev => ({ ...prev, fileType: value }))}
-              style={{ width: 150 }}
-              allowClear
-            >
-              {fileTypes.map(type => (
-                <Option key={type} value={type}>
-                  {fileTypeConfig[type]?.label || type}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Category"
-              value={filters.category}
-              onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-              style={{ width: 150 }}
-              allowClear
-            >
-              {categories.map(cat => (
-                <Option key={cat} value={cat}>
-                  {categoryLabels[cat] || cat}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Sort By"
-              value={filters.sortBy}
-              onChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
-              style={{ width: 120 }}
-            >
-              <Option value="createdAt">Date</Option>
-              <Option value="viewCount">Views</Option>
-              <Option value="downloadCount">Downloads</Option>
-            </Select>
-            <Button
-              icon={<Filter className="w-4 h-4" />}
-              onClick={() => setFilters({ fileType: '', category: '', search: '', sortBy: 'createdAt', sortOrder: 'desc' })}
-            >
-              Clear
-            </Button>
-            <div className="ml-auto">
-              <Space>
+          <div style={{ 
+            maxWidth: '100%', 
+            margin: '0 auto',
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+              <Space align="center">
                 <Button
-                  type={viewMode === 'grid' ? 'primary' : 'default'}
-                  icon={<Grid className="w-4 h-4" />}
-                  onClick={() => setViewMode('grid')}
+                  type="link"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={() => navigate('/student-dashboard')}
+                  style={{
+                    fontSize: '16px',
+                    marginRight: '8px',
+                    padding: 0
+                  }}
                 />
-                <Button
-                  type={viewMode === 'list' ? 'primary' : 'default'}
-                  icon={<List className="w-4 h-4" />}
-                  onClick={() => setViewMode('list')}
-                />
+                <Title level={2} style={{ margin: 0 }}>File Library</Title>
               </Space>
-            </div>
-          </div>
-        </Card>
-        {/* Files Display */}
-        {loading ? (
-          <div className="text-center py-12">
-            <Spin size="large" />
-            <p className="mt-4 text-gray-500">Loading files...</p>
-          </div>
-        ) : files.length === 0 ? (
-          <Empty
-            description="No files found"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        ) : (
-          <>
-            {viewMode === 'grid' ? (
-              <Row gutter={[16, 16]}>
-                {files.map(file => (
-                  <Col key={file._id} xs={24} sm={12} md={8} lg={6}>
-                    {renderFileCard(file)}
-                  </Col>
-                ))}
-              </Row>
-            ) : (
-              <div>
-                {files.map(file => renderFileList(file))}
-              </div>
-            )}
+            </Row>
 
-            {/* Pagination */}
-            {pagination.total > pagination.pageSize && (
-              <div className="mt-6 text-center">
-                <Pagination
-                  current={pagination.current}
-                  pageSize={pagination.pageSize}
-                  total={pagination.total}
-                  onChange={(page) => setPagination(prev => ({ ...prev, current: page }))}
-                  showSizeChanger={false}
+            {/* Tabs */}
+            <Tabs activeKey={activeTab} onChange={(key) => {
+              setActiveTab(key);
+              setSearchParams({ tab: key });
+            }}>
+              <TabPane tab="All Files" key="all" />
+              <TabPane tab="PDFs" key="pdf" />
+              <TabPane tab="Videos" key="video" />
+              <TabPane tab="Audio" key="audio" />
+              <TabPane tab="Images" key="image" />
+            </Tabs>
+
+            {/* Filters */}
+            <Card className="mb-6">
+              <div className="flex flex-wrap gap-4 items-center">
+                <Input
+                  placeholder="Search files..."
+                  prefix={<Search className="w-4 h-4" />}
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  style={{ width: 200 }}
                 />
+                <Select
+                  placeholder="File Type"
+                  value={filters.fileType}
+                  onChange={(value) => setFilters(prev => ({ ...prev, fileType: value }))}
+                  style={{ width: 150 }}
+                  allowClear
+                >
+                  {fileTypes.map(type => (
+                    <Option key={type} value={type}>
+                      {fileTypeConfig[type]?.label || type}
+                    </Option>
+                  ))}
+                </Select>
+                <Select
+                  placeholder="Category"
+                  value={filters.category}
+                  onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                  style={{ width: 150 }}
+                  allowClear
+                >
+                  {categories.map(cat => (
+                    <Option key={cat} value={cat}>
+                      {categoryLabels[cat] || cat}
+                    </Option>
+                  ))}
+                </Select>
+                <Select
+                  placeholder="Sort By"
+                  value={filters.sortBy}
+                  onChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+                  style={{ width: 120 }}
+                >
+                  <Option value="createdAt">Date</Option>
+                  <Option value="viewCount">Views</Option>
+                  <Option value="downloadCount">Downloads</Option>
+                </Select>
+                <Button
+                  icon={<Filter className="w-4 h-4" />}
+                  onClick={() => setFilters({ fileType: '', category: '', search: '', sortBy: 'createdAt', sortOrder: 'desc' })}
+                >
+                  Clear
+                </Button>
+                <div className="ml-auto">
+                  <Space>
+                    <Button
+                      type={viewMode === 'grid' ? 'primary' : 'default'}
+                      icon={<Grid className="w-4 h-4" />}
+                      onClick={() => setViewMode('grid')}
+                    />
+                    <Button
+                      type={viewMode === 'list' ? 'primary' : 'default'}
+                      icon={<List className="w-4 h-4" />}
+                      onClick={() => setViewMode('list')}
+                    />
+                  </Space>
+                </div>
               </div>
+            </Card>
+
+            {/* Files Display */}
+            {loading ? (
+              <div className="text-center py-12">
+                <Spin size="large" />
+                <p className="mt-4 text-gray-500">Loading files...</p>
+              </div>
+            ) : files.length === 0 ? (
+              <Empty
+                description="No files found"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            ) : (
+              <>
+                {viewMode === 'grid' ? (
+                  <Row gutter={[16, 16]}>
+                    {files.map(file => (
+                      <Col key={file._id} xs={24} sm={12} md={8} lg={6}>
+                        {renderFileCard(file)}
+                      </Col>
+                    ))}
+                  </Row>
+                ) : (
+                  <div>
+                    {files.map(file => renderFileList(file))}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {pagination.total > pagination.pageSize && (
+                  <div className="mt-6 text-center">
+                    <Pagination
+                      current={pagination.current}
+                      pageSize={pagination.pageSize}
+                      total={pagination.total}
+                      onChange={(page) => setPagination(prev => ({ ...prev, current: page }))}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
-
-
+          </div>
+        </Content>
+      </Layout>
 
       {/* File Details Modal */}
       <Modal
@@ -675,7 +698,7 @@ const FileLibrary = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </Layout>
   );
 };
 

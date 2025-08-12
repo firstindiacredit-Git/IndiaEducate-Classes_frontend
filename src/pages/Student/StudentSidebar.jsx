@@ -249,11 +249,6 @@ const StudentSidebar = ({ collapsed, setCollapsed }) => {
       label: 'Quiz History',
     },
     {
-      key: '/quiz-result',
-      icon: <CheckCircleOutlined />,
-      label: 'Quiz Result',
-    },
-    {
       type: 'divider'
     },
     {
