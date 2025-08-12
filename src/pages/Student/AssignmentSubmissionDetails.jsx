@@ -36,6 +36,7 @@ const { Title, Text } = Typography;
 const AssignmentSubmissionDetails = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(false);
   const [mediaModalVisible, setMediaModalVisible] = useState(false);
