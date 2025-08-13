@@ -20,6 +20,7 @@ import {
   MessageOutlined,
   MailOutlined,
   QuestionCircleOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -335,6 +336,22 @@ const AdminDashboard = () => {
                   value={expiredSessionsCount}
                   prefix={<WarningOutlined style={{ color: '#ff4d4f' }} />}
                   valueStyle={{ color: '#ff4d4f' }}
+                />
+              </Card>
+            </Col>
+
+            {/* Payment Management Card */}
+            <Col xs={24} sm={12} lg={6}>
+              <Card
+                hoverable
+                onClick={() => navigate('/payment-management')}
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic
+                  title="Payment Management"
+                  value="Track Payments"
+                  prefix={<DollarOutlined style={{ color: '#52c41a' }} />}
+                  valueStyle={{ color: '#52c41a', fontSize: '14px' }}
                 />
               </Card>
             </Col>

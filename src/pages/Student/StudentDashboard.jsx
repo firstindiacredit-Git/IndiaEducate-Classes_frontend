@@ -19,7 +19,8 @@ import {
   CheckCircleOutlined,
   FieldTimeOutlined,
   CloseCircleOutlined,
-  MessageOutlined
+  MessageOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
 import StudentNavbar from './StudentNavbar';
 import StudentSidebar from './StudentSidebar';
@@ -1226,7 +1227,7 @@ const StudentDashboard = () => {
               </Col>
               {/* Quizzes Card */}
               <Col xs={24}>
-                <Card title="QUIZZES / SPEAKING ASSIGNMENTS">
+                <Card title="QUIZZES / ASSIGNMENTS">
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Button
                       icon={<QuestionCircleOutlined />}
@@ -1246,6 +1247,30 @@ const StudentDashboard = () => {
                   </Space>
                 </Card>
               </Col>
+              {/* Payment Card */}
+              <Col xs={24}>
+                <Card title="PAYMENT & ENROLLMENT">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button 
+                      icon={<DollarOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/payment')}
+                    >
+                      Enroll in Course
+                    </Button>
+                    <Button 
+                      icon={<LineChartOutlined />} 
+                      block 
+                      style={{ textAlign: 'left' }}
+                      onClick={() => navigate('/payment-history')}
+                    >
+                      Payment History
+                    </Button>
+                  </Space>
+                </Card>
+              </Col>
+
               {/* Support Card */}
               <Col xs={24}>
                 <Card title="SUPPORT">

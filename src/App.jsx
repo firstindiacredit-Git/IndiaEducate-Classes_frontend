@@ -39,6 +39,9 @@ import FAQ from './pages/Student/FAQ';
 import TicketManagement from './pages/Admin/TicketManagement';
 import ContactManagement from './pages/Admin/ContactManagement';
 import FAQManagement from './pages/Admin/FAQManagement';
+import Payment from './pages/Student/Payment';
+import PaymentHistory from './pages/Student/PaymentHistory';
+import PaymentManagement from './pages/Admin/PaymentManagement';
 
 const AppRoutes = () => {
   const { isAuthenticated, role } = useAuth();
@@ -204,6 +207,23 @@ const AppRoutes = () => {
         <Route path="/faq-management" element={
           <ProtectedRoute requiredRole="admin">
             <FAQManagement />
+          </ProtectedRoute>
+        } />
+
+        {/* Payment Routes */}
+        <Route path="/payment" element={
+          <ProtectedRoute requiredRole="student">
+            <Payment />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment-history" element={
+          <ProtectedRoute requiredRole="student">
+            <PaymentHistory />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment-management" element={
+          <ProtectedRoute requiredRole="admin">
+            <PaymentManagement />
           </ProtectedRoute>
         } />
 

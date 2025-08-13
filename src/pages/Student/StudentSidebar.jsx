@@ -74,6 +74,7 @@ import {
   IdcardOutlined,
   PlusOutlined,
   EyeOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -276,6 +277,16 @@ const StudentSidebar = ({ collapsed, setCollapsed }) => {
     },
     {
       type: 'divider'
+    },
+    {
+      key: '/payment',
+      icon: <DollarOutlined />,
+      label: 'Enroll & Pay',
+    },
+    {
+      key: '/payment-history',
+      icon: <DollarOutlined />,
+      label: 'Payment History',
     },
     {
       type: 'divider'

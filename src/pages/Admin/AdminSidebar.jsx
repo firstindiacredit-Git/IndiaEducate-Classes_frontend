@@ -54,6 +54,7 @@ import {
   BellOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -249,6 +250,11 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
       key: '/certificate-management',
       icon: <TrophyOutlined />,
       label: 'Certificate Management',
+    },
+    {
+      key: '/payment-management',
+      icon: <DollarOutlined />,
+      label: 'Payment Management',
     },
     {
       type: 'divider'
