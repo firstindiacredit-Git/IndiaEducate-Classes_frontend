@@ -341,7 +341,7 @@ const AdminDashboard = () => {
             </Col>
 
             {/* Payment Management Card */}
-            <Col xs={24} sm={12} lg={6}>
+            {/* <Col xs={24} sm={12} lg={6}>
               <Card
                 hoverable
                 onClick={() => navigate('/payment-management')}
@@ -354,7 +354,7 @@ const AdminDashboard = () => {
                   valueStyle={{ color: '#52c41a', fontSize: '14px' }}
                 />
               </Card>
-            </Col>
+            </Col> */}
 
 
             {/* File Upload Management */}

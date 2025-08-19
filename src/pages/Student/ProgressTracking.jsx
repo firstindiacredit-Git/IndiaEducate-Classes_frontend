@@ -58,29 +58,42 @@ const ProgressTracking = () => {
       });
       setProgressData(response.data);
       
-      // Show notifications for new badges
+      // Show notifications for new badges only if they haven't been shown before
       if (response.data.newBadges && response.data.newBadges.length > 0) {
-        response.data.newBadges.forEach(badge => {
-          message.success({
-            content: (
-              <div>
-                <div style={{ fontSize: '16px', marginBottom: '4px' }}>
-                  🎉 Congratulations! You earned a new badge!
+        const shownBadgesKey = `shownBadges_${emailOrPhone}`;
+        const shownBadges = JSON.parse(localStorage.getItem(shownBadgesKey) || '[]');
+        
+        const newBadgesToShow = response.data.newBadges.filter(badge => 
+          !shownBadges.includes(badge.id)
+        );
+        
+        if (newBadgesToShow.length > 0) {
+          newBadgesToShow.forEach(badge => {
+            message.success({
+              content: (
+                <div>
+                  <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                    🎉 Congratulations! You earned a new badge!
+                  </div>
+                  <div style={{ fontSize: '14px' }}>
+                    {badge.icon} {badge.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {badge.description}
+                  </div>
                 </div>
-                <div style={{ fontSize: '14px' }}>
-                  {badge.icon} {badge.name}
-                </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>
-                  {badge.description}
-                </div>
-              </div>
-            ),
-            duration: 5,
-            style: {
-              marginTop: '20px',
-            },
+              ),
+              duration: 5,
+              style: {
+                marginTop: '20px',
+              },
+            });
           });
-        });
+          
+          // Store the shown badge IDs to prevent showing them again
+          const updatedShownBadges = [...shownBadges, ...newBadgesToShow.map(badge => badge.id)];
+          localStorage.setItem(shownBadgesKey, JSON.stringify(updatedShownBadges));
+        }
       }
     } catch (err) {
       console.error('Error fetching progress data:', err);

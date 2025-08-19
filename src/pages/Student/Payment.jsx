@@ -31,7 +31,7 @@ const Payment = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Program details
-  const programs = [
+  const allPrograms = [
     {
       id: '24-session',
       name: '24 Session Program',
@@ -70,14 +70,36 @@ const Payment = () => {
     }
   ];
 
-  // Check if user is authenticated
+  // Filter programs based on student's selected program during profile creation
+  const programs = profile?.program ? 
+    allPrograms.filter(program => program.id === profile.program) : 
+    [];
+
+  // Check if user is authenticated and has selected a program
   useEffect(() => {
     if (!profile) {
       message.error('Please login to access payment page');
       navigate('/login');
       return;
     }
-  }, [profile, navigate]);
+
+    // Check if student has selected a program during profile creation
+    if (!profile.program) {
+      message.warning('Please complete your profile and select a program first');
+      navigate('/create-profile');
+      return;
+    }
+
+    // If student has already selected a program during profile creation, auto-select it
+    if (profile.program && programs.length > 0) {
+      const studentProgram = programs.find(program => program.id === profile.program);
+      if (studentProgram) {
+        setSelectedProgram(studentProgram);
+        // Don't skip the program selection step - show it with the selected program
+        setCurrentStep(0);
+      }
+    }
+  }, [profile, navigate, programs]);
 
   // Load Razorpay script
   useEffect(() => {
@@ -207,7 +229,7 @@ const Payment = () => {
 
   const steps = [
     {
-      title: 'Select Program',
+      title: 'Program Selection',
       icon: <BookOutlined />
     },
     {
@@ -240,62 +262,83 @@ const Payment = () => {
           {/* Step 1: Program Selection */}
           {currentStep === 0 && (
             <div>
-              <Title level={3}>Choose Your Learning Program</Title>
-              <Paragraph>
-                Select the program that best fits your learning goals and schedule.
-              </Paragraph>
-              
-              <Row gutter={[24, 24]}>
-                {programs.map((program) => (
-                  <Col xs={24} md={12} key={program.id}>
-                    <Card
-                      hoverable
-                      style={{
-                        border: selectedProgram?.id === program.id ? '2px solid #1890ff' : '1px solid #f0f0f0',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => handleProgramSelect(program)}
-                    >
-                      <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                        <Title level={4} style={{ color: '#1890ff' }}>
-                          {program.name}
-                        </Title>
-                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
-                          {formatCurrency(program.price, program.currency)}
-                        </div>
-                        <Text type="secondary">{program.duration} • {program.sessions}</Text>
-                      </div>
-                      
-                      <Paragraph style={{ textAlign: 'center', marginBottom: 16 }}>
-                        {program.description}
-                      </Paragraph>
-                      
-                      <Divider />
-                      
-                      <div>
-                        <Title level={5}>What's Included:</Title>
-                        <ul style={{ paddingLeft: 20 }}>
-                          {program.features.map((feature, index) => (
-                            <li key={index} style={{ marginBottom: 8 }}>
-                              <Text>{feature}</Text>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      <div style={{ textAlign: 'center', marginTop: 16 }}>
-                        <Button 
-                          type={selectedProgram?.id === program.id ? 'primary' : 'default'}
-                          size="large"
-                          icon={<BookOutlined />}
+              {programs.length > 0 ? (
+                <>
+                  <Title level={3}>Program Selection</Title>
+                  <Paragraph>
+                    Here is the program you selected during profile creation:
+                  </Paragraph>
+                  
+                  <Row gutter={[24, 24]}>
+                    {programs.map((program) => (
+                      <Col xs={24} md={12} key={program.id}>
+                        <Card
+                          style={{
+                            border: '2px solid #1890ff',
+                            backgroundColor: '#f0f8ff'
+                          }}
                         >
-                          {selectedProgram?.id === program.id ? 'Selected' : 'Select Program'}
-                        </Button>
-                      </div>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
+                          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                            <Title level={4} style={{ color: '#1890ff' }}>
+                              {program.name}
+                            </Title>
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
+                              {formatCurrency(program.price, program.currency)}
+                            </div>
+                            <Text type="secondary">{program.duration} • {program.sessions}</Text>
+                          </div>
+                          
+                          <Paragraph style={{ textAlign: 'center', marginBottom: 16 }}>
+                            {program.description}
+                          </Paragraph>
+                          
+                          <Divider />
+                          
+                          <div>
+                            <Title level={5}>What's Included:</Title>
+                            <ul style={{ paddingLeft: 20 }}>
+                              {program.features.map((feature, index) => (
+                                <li key={index} style={{ marginBottom: 8 }}>
+                                  <Text>{feature}</Text>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div style={{ textAlign: 'center', marginTop: 16 }}>
+                            <Button 
+                              type="primary"
+                              size="large"
+                              icon={<BookOutlined />}
+                              onClick={() => handleProgramSelect(program)}
+                            >
+                              Proceed to Payment
+                            </Button>
+                          </div>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <Alert
+                    message="No Program Selected"
+                    description="Please complete your profile and select a program before proceeding with payment."
+                    type="warning"
+                    showIcon
+                    style={{ maxWidth: 500, margin: '0 auto' }}
+                  />
+                  <div style={{ marginTop: 24 }}>
+                    <Button 
+                      type="primary" 
+                      onClick={() => navigate('/create-profile')}
+                    >
+                      Complete Profile
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

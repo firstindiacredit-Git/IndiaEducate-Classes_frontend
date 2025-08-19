@@ -206,6 +206,13 @@ const StudentNavbar = () => {
             okText: 'Yes, Logout',
             cancelText: 'No, Cancel',
             onOk() {
+                // Clear shown badges for this user when logging out
+                const emailOrPhone = localStorage.getItem('studentEmailOrPhone');
+                if (emailOrPhone) {
+                    const shownBadgesKey = `shownBadges_${emailOrPhone}`;
+                    localStorage.removeItem(shownBadgesKey);
+                }
+                
                 logout();
                 navigate('/');
             },

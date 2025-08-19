@@ -274,19 +274,6 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
       icon: <QuestionCircleOutlined />,
       label: 'FAQ Management',
     },
-    {
-      type: 'divider'
-    },
-    {
-      key: '/quiz-submissions',
-      icon: <FileTextOutlined />,
-      label: 'Quiz Submissions',
-    },
-    {
-      key: '/assignment-submissions',
-      icon: <FileTextOutlined />,
-      label: 'Assignment Submissions',
-    },
   ];
 
   return (
